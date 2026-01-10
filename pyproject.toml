@@ -1,0 +1,40 @@
+[project]
+name = "opengov-api"
+version = "0.1.0"
+description = "Python SDK for OpenGov API with functional factory pattern"
+readme = "README.md"
+license = { file = "LICENSE" }
+authors = [
+    { name = "Drew Ayling", email = "drew@ayling.fyi" }
+]
+requires-python = ">=3.14"
+dependencies = [
+    "httpx>=0.28.1",
+]
+
+[build-system]
+requires = ["uv_build>=0.9.24,<0.10.0"]
+build-backend = "uv_build"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = [
+    "--strict-markers",
+    "--strict-config",
+    "-ra",
+    "--cov=.",
+    "--cov-report=html:coverage/html",
+    "--cov-report=lcov:coverage/lcov.info",
+]
+
+[dependency-groups]
+dev = [
+    "pyright>=1.1.408",
+    "pytest>=9.0.2",
+    "pytest-cov>=7.0.0",
+    "pytest-httpx>=0.36.0",
+    "ruff>=0.14.11",
+]
