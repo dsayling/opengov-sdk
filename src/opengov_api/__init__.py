@@ -70,6 +70,39 @@ from .records import (
     update_record_collection_entry,
 )
 from .users import list_users, get_user, create_user, list_user_flags
+from .locations import (
+    list_locations,
+    get_location,
+    create_location,
+    update_location,
+    delete_location,
+    list_location_flags,
+)
+from .approvals import (
+    list_approval_steps,
+    get_approval_step,
+    update_approval_step,
+)
+from .documents import (
+    list_document_steps,
+    get_document_step,
+)
+from .inspections import (
+    list_inspection_steps,
+    get_inspection_step,
+    update_inspection_step,
+    list_inspection_types,
+    create_inspection_type,
+)
+from .files import (
+    list_files,
+    get_file,
+    create_file_upload,
+)
+from .projects import (
+    list_projects,
+    get_project,
+)
 
 # Exceptions
 from .exceptions import (
@@ -146,6 +179,33 @@ __all__ = [
     "get_user",
     "create_user",
     "list_user_flags",
+    # Locations
+    "list_locations",
+    "get_location",
+    "create_location",
+    "update_location",
+    "delete_location",
+    "list_location_flags",
+    # Approval Steps
+    "list_approval_steps",
+    "get_approval_step",
+    "update_approval_step",
+    # Document Steps
+    "list_document_steps",
+    "get_document_step",
+    # Inspection Steps
+    "list_inspection_steps",
+    "get_inspection_step",
+    "update_inspection_step",
+    "list_inspection_types",
+    "create_inspection_type",
+    # Files
+    "list_files",
+    "get_file",
+    "create_file_upload",
+    # Projects
+    "list_projects",
+    "get_project",
     # Exceptions
     "OpenGovAPIError",
     "OpenGovConfigurationError",
