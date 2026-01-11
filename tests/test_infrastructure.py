@@ -24,6 +24,12 @@ class TestInfrastructure:
         [
             opengov_api.list_records,
             opengov_api.list_users,
+            opengov_api.list_locations,
+            opengov_api.list_approval_steps,
+            opengov_api.list_document_steps,
+            opengov_api.list_inspection_steps,
+            opengov_api.list_files,
+            opengov_api.list_projects,
         ],
     )
     def test_requires_api_key(self, endpoint_func, httpx_mock: HTTPXMock):
@@ -38,6 +44,12 @@ class TestInfrastructure:
         [
             opengov_api.list_records,
             opengov_api.list_users,
+            opengov_api.list_locations,
+            opengov_api.list_approval_steps,
+            opengov_api.list_document_steps,
+            opengov_api.list_inspection_steps,
+            opengov_api.list_files,
+            opengov_api.list_projects,
         ],
     )
     def test_requires_community(self, endpoint_func, httpx_mock: HTTPXMock):
@@ -57,6 +69,30 @@ class TestInfrastructure:
             (
                 opengov_api.list_users,
                 "https://api.plce.opengov.com/plce/v2/testcommunity/users",
+            ),
+            (
+                opengov_api.list_locations,
+                "https://api.plce.opengov.com/plce/v2/testcommunity/locations",
+            ),
+            (
+                opengov_api.list_approval_steps,
+                "https://api.plce.opengov.com/plce/v2/testcommunity/approval-steps",
+            ),
+            (
+                opengov_api.list_document_steps,
+                "https://api.plce.opengov.com/plce/v2/testcommunity/document-steps",
+            ),
+            (
+                opengov_api.list_inspection_steps,
+                "https://api.plce.opengov.com/plce/v2/testcommunity/inspection-steps",
+            ),
+            (
+                opengov_api.list_files,
+                "https://api.plce.opengov.com/plce/v2/testcommunity/files",
+            ),
+            (
+                opengov_api.list_projects,
+                "https://api.plce.opengov.com/plce/v2/testcommunity/projects",
             ),
         ],
     )
@@ -81,6 +117,30 @@ class TestInfrastructure:
                 opengov_api.list_users,
                 "https://api.plce.opengov.com/plce/v2/testcommunity/users",
             ),
+            (
+                opengov_api.list_locations,
+                "https://api.plce.opengov.com/plce/v2/testcommunity/locations",
+            ),
+            (
+                opengov_api.list_approval_steps,
+                "https://api.plce.opengov.com/plce/v2/testcommunity/approval-steps",
+            ),
+            (
+                opengov_api.list_document_steps,
+                "https://api.plce.opengov.com/plce/v2/testcommunity/document-steps",
+            ),
+            (
+                opengov_api.list_inspection_steps,
+                "https://api.plce.opengov.com/plce/v2/testcommunity/inspection-steps",
+            ),
+            (
+                opengov_api.list_files,
+                "https://api.plce.opengov.com/plce/v2/testcommunity/files",
+            ),
+            (
+                opengov_api.list_projects,
+                "https://api.plce.opengov.com/plce/v2/testcommunity/projects",
+            ),
         ],
     )
     def test_handles_invalid_json(
@@ -100,6 +160,27 @@ class TestInfrastructure:
                 "https://custom.api.com/v3/testcommunity/records",
             ),
             (opengov_api.list_users, "https://custom.api.com/v3/testcommunity/users"),
+            (
+                opengov_api.list_locations,
+                "https://custom.api.com/v3/testcommunity/locations",
+            ),
+            (
+                opengov_api.list_approval_steps,
+                "https://custom.api.com/v3/testcommunity/approval-steps",
+            ),
+            (
+                opengov_api.list_document_steps,
+                "https://custom.api.com/v3/testcommunity/document-steps",
+            ),
+            (
+                opengov_api.list_inspection_steps,
+                "https://custom.api.com/v3/testcommunity/inspection-steps",
+            ),
+            (opengov_api.list_files, "https://custom.api.com/v3/testcommunity/files"),
+            (
+                opengov_api.list_projects,
+                "https://custom.api.com/v3/testcommunity/projects",
+            ),
         ],
     )
     def test_custom_base_url(
@@ -121,6 +202,14 @@ class TestGetEndpointInfrastructure:
             (opengov_api.get_record, "12345"),
             (opengov_api.get_user, "12345"),
             (opengov_api.list_user_flags, "12345"),
+            (opengov_api.get_location, "12345"),
+            (opengov_api.list_location_flags, "12345"),
+            (opengov_api.get_approval_step, "12345"),
+            (opengov_api.get_document_step, "12345"),
+            (opengov_api.get_inspection_step, "12345"),
+            (opengov_api.list_inspection_types, "12345"),
+            (opengov_api.get_file, "12345"),
+            (opengov_api.get_project, "12345"),
         ],
     )
     def test_get_requires_api_key(
@@ -138,6 +227,14 @@ class TestGetEndpointInfrastructure:
             (opengov_api.get_record, "12345"),
             (opengov_api.get_user, "12345"),
             (opengov_api.list_user_flags, "12345"),
+            (opengov_api.get_location, "12345"),
+            (opengov_api.list_location_flags, "12345"),
+            (opengov_api.get_approval_step, "12345"),
+            (opengov_api.get_document_step, "12345"),
+            (opengov_api.get_inspection_step, "12345"),
+            (opengov_api.list_inspection_types, "12345"),
+            (opengov_api.get_file, "12345"),
+            (opengov_api.get_project, "12345"),
         ],
     )
     def test_get_requires_community(
@@ -166,6 +263,46 @@ class TestGetEndpointInfrastructure:
                 opengov_api.list_user_flags,
                 "12345",
                 "https://api.plce.opengov.com/plce/v2/testcommunity/users/12345/flags",
+            ),
+            (
+                opengov_api.get_location,
+                "12345",
+                "https://api.plce.opengov.com/plce/v2/testcommunity/locations/12345",
+            ),
+            (
+                opengov_api.list_location_flags,
+                "12345",
+                "https://api.plce.opengov.com/plce/v2/testcommunity/locations/12345/flags",
+            ),
+            (
+                opengov_api.get_approval_step,
+                "12345",
+                "https://api.plce.opengov.com/plce/v2/testcommunity/approval-steps/12345",
+            ),
+            (
+                opengov_api.get_document_step,
+                "12345",
+                "https://api.plce.opengov.com/plce/v2/testcommunity/document-steps/12345",
+            ),
+            (
+                opengov_api.get_inspection_step,
+                "12345",
+                "https://api.plce.opengov.com/plce/v2/testcommunity/inspection-steps/12345",
+            ),
+            (
+                opengov_api.list_inspection_types,
+                "12345",
+                "https://api.plce.opengov.com/plce/v2/testcommunity/inspection-steps/12345/inspection-types",
+            ),
+            (
+                opengov_api.get_file,
+                "12345",
+                "https://api.plce.opengov.com/plce/v2/testcommunity/files/12345",
+            ),
+            (
+                opengov_api.get_project,
+                "12345",
+                "https://api.plce.opengov.com/plce/v2/testcommunity/projects/12345",
             ),
         ],
     )
@@ -196,6 +333,46 @@ class TestGetEndpointInfrastructure:
                 opengov_api.list_user_flags,
                 "12345",
                 "https://custom.api.com/v3/testcommunity/users/12345/flags",
+            ),
+            (
+                opengov_api.get_location,
+                "12345",
+                "https://custom.api.com/v3/testcommunity/locations/12345",
+            ),
+            (
+                opengov_api.list_location_flags,
+                "12345",
+                "https://custom.api.com/v3/testcommunity/locations/12345/flags",
+            ),
+            (
+                opengov_api.get_approval_step,
+                "12345",
+                "https://custom.api.com/v3/testcommunity/approval-steps/12345",
+            ),
+            (
+                opengov_api.get_document_step,
+                "12345",
+                "https://custom.api.com/v3/testcommunity/document-steps/12345",
+            ),
+            (
+                opengov_api.get_inspection_step,
+                "12345",
+                "https://custom.api.com/v3/testcommunity/inspection-steps/12345",
+            ),
+            (
+                opengov_api.list_inspection_types,
+                "12345",
+                "https://custom.api.com/v3/testcommunity/inspection-steps/12345/inspection-types",
+            ),
+            (
+                opengov_api.get_file,
+                "12345",
+                "https://custom.api.com/v3/testcommunity/files/12345",
+            ),
+            (
+                opengov_api.get_project,
+                "12345",
+                "https://custom.api.com/v3/testcommunity/projects/12345",
             ),
         ],
     )

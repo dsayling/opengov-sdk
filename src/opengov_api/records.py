@@ -317,7 +317,9 @@ def get_record_applicant(record_id: str) -> dict[str, Any]:
         >>> print(applicant)
     """
     with _get_client() as client:
-        url = build_url(get_base_url(), get_community(), f"records/{record_id}/applicant")
+        url = build_url(
+            get_base_url(), get_community(), f"records/{record_id}/applicant"
+        )
         response = client.get(url)
         response.raise_for_status()
         return parse_json_response(response)
@@ -352,7 +354,9 @@ def update_record_applicant(record_id: str, data: dict[str, Any]) -> dict[str, A
         >>> print(applicant)
     """
     with _get_client() as client:
-        url = build_url(get_base_url(), get_community(), f"records/{record_id}/applicant")
+        url = build_url(
+            get_base_url(), get_community(), f"records/{record_id}/applicant"
+        )
         response = client.patch(url, json=data)
         response.raise_for_status()
         return parse_json_response(response)
@@ -385,7 +389,9 @@ def remove_record_applicant(record_id: str) -> dict[str, Any]:
         >>> print(result)
     """
     with _get_client() as client:
-        url = build_url(get_base_url(), get_community(), f"records/{record_id}/applicant")
+        url = build_url(
+            get_base_url(), get_community(), f"records/{record_id}/applicant"
+        )
         response = client.delete(url)
         response.raise_for_status()
         return parse_json_response(response)
@@ -488,7 +494,9 @@ def get_record_guest(record_id: str, user_id: str) -> dict[str, Any]:
         >>> print(guest)
     """
     with _get_client() as client:
-        url = build_url(get_base_url(), get_community(), f"records/{record_id}/guests/{user_id}")
+        url = build_url(
+            get_base_url(), get_community(), f"records/{record_id}/guests/{user_id}"
+        )
         response = client.get(url)
         response.raise_for_status()
         return parse_json_response(response)
@@ -522,7 +530,9 @@ def remove_record_guest(record_id: str, user_id: str) -> dict[str, Any]:
         >>> print(result)
     """
     with _get_client() as client:
-        url = build_url(get_base_url(), get_community(), f"records/{record_id}/guests/{user_id}")
+        url = build_url(
+            get_base_url(), get_community(), f"records/{record_id}/guests/{user_id}"
+        )
         response = client.delete(url)
         response.raise_for_status()
         return parse_json_response(response)
@@ -556,14 +566,18 @@ def get_record_primary_location(record_id: str) -> dict[str, Any]:
         >>> print(location)
     """
     with _get_client() as client:
-        url = build_url(get_base_url(), get_community(), f"records/{record_id}/primary-location")
+        url = build_url(
+            get_base_url(), get_community(), f"records/{record_id}/primary-location"
+        )
         response = client.get(url)
         response.raise_for_status()
         return parse_json_response(response)
 
 
 @handle_request_errors
-def update_record_primary_location(record_id: str, data: dict[str, Any]) -> dict[str, Any]:
+def update_record_primary_location(
+    record_id: str, data: dict[str, Any]
+) -> dict[str, Any]:
     """
     Update the primary location for a record.
 
@@ -591,7 +605,9 @@ def update_record_primary_location(record_id: str, data: dict[str, Any]) -> dict
         >>> print(location)
     """
     with _get_client() as client:
-        url = build_url(get_base_url(), get_community(), f"records/{record_id}/primary-location")
+        url = build_url(
+            get_base_url(), get_community(), f"records/{record_id}/primary-location"
+        )
         response = client.patch(url, json=data)
         response.raise_for_status()
         return parse_json_response(response)
@@ -624,7 +640,9 @@ def remove_record_primary_location(record_id: str) -> dict[str, Any]:
         >>> print(result)
     """
     with _get_client() as client:
-        url = build_url(get_base_url(), get_community(), f"records/{record_id}/primary-location")
+        url = build_url(
+            get_base_url(), get_community(), f"records/{record_id}/primary-location"
+        )
         response = client.delete(url)
         response.raise_for_status()
         return parse_json_response(response)
@@ -658,14 +676,18 @@ def list_record_additional_locations(record_id: str) -> dict[str, Any]:
         >>> print(locations)
     """
     with _get_client() as client:
-        url = build_url(get_base_url(), get_community(), f"records/{record_id}/additional-locations")
+        url = build_url(
+            get_base_url(), get_community(), f"records/{record_id}/additional-locations"
+        )
         response = client.get(url)
         response.raise_for_status()
         return parse_json_response(response)
 
 
 @handle_request_errors
-def add_record_additional_location(record_id: str, data: dict[str, Any]) -> dict[str, Any]:
+def add_record_additional_location(
+    record_id: str, data: dict[str, Any]
+) -> dict[str, Any]:
     """
     Add an additional location to a record.
 
@@ -693,7 +715,9 @@ def add_record_additional_location(record_id: str, data: dict[str, Any]) -> dict
         >>> print(location)
     """
     with _get_client() as client:
-        url = build_url(get_base_url(), get_community(), f"records/{record_id}/additional-locations")
+        url = build_url(
+            get_base_url(), get_community(), f"records/{record_id}/additional-locations"
+        )
         response = client.post(url, json=data)
         response.raise_for_status()
         return parse_json_response(response)
@@ -727,14 +751,20 @@ def get_record_additional_location(record_id: str, location_id: str) -> dict[str
         >>> print(location)
     """
     with _get_client() as client:
-        url = build_url(get_base_url(), get_community(), f"records/{record_id}/additional-locations/{location_id}")
+        url = build_url(
+            get_base_url(),
+            get_community(),
+            f"records/{record_id}/additional-locations/{location_id}",
+        )
         response = client.get(url)
         response.raise_for_status()
         return parse_json_response(response)
 
 
 @handle_request_errors
-def remove_record_additional_location(record_id: str, location_id: str) -> dict[str, Any]:
+def remove_record_additional_location(
+    record_id: str, location_id: str
+) -> dict[str, Any]:
     """
     Remove an additional location from a record.
 
@@ -761,7 +791,11 @@ def remove_record_additional_location(record_id: str, location_id: str) -> dict[
         >>> print(result)
     """
     with _get_client() as client:
-        url = build_url(get_base_url(), get_community(), f"records/{record_id}/additional-locations/{location_id}")
+        url = build_url(
+            get_base_url(),
+            get_community(),
+            f"records/{record_id}/additional-locations/{location_id}",
+        )
         response = client.delete(url)
         response.raise_for_status()
         return parse_json_response(response)
@@ -795,7 +829,9 @@ def list_record_attachments(record_id: str) -> dict[str, Any]:
         >>> print(attachments)
     """
     with _get_client() as client:
-        url = build_url(get_base_url(), get_community(), f"records/{record_id}/attachments")
+        url = build_url(
+            get_base_url(), get_community(), f"records/{record_id}/attachments"
+        )
         response = client.get(url)
         response.raise_for_status()
         return parse_json_response(response)
@@ -830,7 +866,9 @@ def add_record_attachment(record_id: str, data: dict[str, Any]) -> dict[str, Any
         >>> print(attachment)
     """
     with _get_client() as client:
-        url = build_url(get_base_url(), get_community(), f"records/{record_id}/attachments")
+        url = build_url(
+            get_base_url(), get_community(), f"records/{record_id}/attachments"
+        )
         response = client.post(url, json=data)
         response.raise_for_status()
         return parse_json_response(response)
@@ -864,7 +902,11 @@ def get_record_attachment(record_id: str, attachment_id: str) -> dict[str, Any]:
         >>> print(attachment)
     """
     with _get_client() as client:
-        url = build_url(get_base_url(), get_community(), f"records/{record_id}/attachments/{attachment_id}")
+        url = build_url(
+            get_base_url(),
+            get_community(),
+            f"records/{record_id}/attachments/{attachment_id}",
+        )
         response = client.get(url)
         response.raise_for_status()
         return parse_json_response(response)
@@ -898,7 +940,11 @@ def remove_record_attachment(record_id: str, attachment_id: str) -> dict[str, An
         >>> print(result)
     """
     with _get_client() as client:
-        url = build_url(get_base_url(), get_community(), f"records/{record_id}/attachments/{attachment_id}")
+        url = build_url(
+            get_base_url(),
+            get_community(),
+            f"records/{record_id}/attachments/{attachment_id}",
+        )
         response = client.delete(url)
         response.raise_for_status()
         return parse_json_response(response)
@@ -933,7 +979,11 @@ def get_record_change_request(record_id: str, change_request_id: str) -> dict[st
         >>> print(change_request)
     """
     with _get_client() as client:
-        url = build_url(get_base_url(), get_community(), f"records/{record_id}/change-requests/{change_request_id}")
+        url = build_url(
+            get_base_url(),
+            get_community(),
+            f"records/{record_id}/change-requests/{change_request_id}",
+        )
         response = client.get(url)
         response.raise_for_status()
         return parse_json_response(response)
@@ -966,14 +1016,18 @@ def get_most_recent_record_change_request(record_id: str) -> dict[str, Any]:
         >>> print(change_request)
     """
     with _get_client() as client:
-        url = build_url(get_base_url(), get_community(), f"records/{record_id}/change-requests")
+        url = build_url(
+            get_base_url(), get_community(), f"records/{record_id}/change-requests"
+        )
         response = client.get(url)
         response.raise_for_status()
         return parse_json_response(response)
 
 
 @handle_request_errors
-def create_record_change_request(record_id: str, data: dict[str, Any]) -> dict[str, Any]:
+def create_record_change_request(
+    record_id: str, data: dict[str, Any]
+) -> dict[str, Any]:
     """
     Create a change request for a record.
 
@@ -1001,14 +1055,18 @@ def create_record_change_request(record_id: str, data: dict[str, Any]) -> dict[s
         >>> print(change_request)
     """
     with _get_client() as client:
-        url = build_url(get_base_url(), get_community(), f"records/{record_id}/change-requests")
+        url = build_url(
+            get_base_url(), get_community(), f"records/{record_id}/change-requests"
+        )
         response = client.post(url, json=data)
         response.raise_for_status()
         return parse_json_response(response)
 
 
 @handle_request_errors
-def cancel_record_change_request(record_id: str, change_request_id: str) -> dict[str, Any]:
+def cancel_record_change_request(
+    record_id: str, change_request_id: str
+) -> dict[str, Any]:
     """
     Cancel a change request for a record.
 
@@ -1035,7 +1093,11 @@ def cancel_record_change_request(record_id: str, change_request_id: str) -> dict
         >>> print(result)
     """
     with _get_client() as client:
-        url = build_url(get_base_url(), get_community(), f"records/{record_id}/change-requests/{change_request_id}")
+        url = build_url(
+            get_base_url(),
+            get_community(),
+            f"records/{record_id}/change-requests/{change_request_id}",
+        )
         response = client.delete(url)
         response.raise_for_status()
         return parse_json_response(response)
@@ -1069,7 +1131,9 @@ def list_record_workflow_steps(record_id: str) -> dict[str, Any]:
         >>> print(steps)
     """
     with _get_client() as client:
-        url = build_url(get_base_url(), get_community(), f"records/{record_id}/workflow-steps")
+        url = build_url(
+            get_base_url(), get_community(), f"records/{record_id}/workflow-steps"
+        )
         response = client.get(url)
         response.raise_for_status()
         return parse_json_response(response)
@@ -1104,7 +1168,9 @@ def create_record_workflow_step(record_id: str, data: dict[str, Any]) -> dict[st
         >>> print(step)
     """
     with _get_client() as client:
-        url = build_url(get_base_url(), get_community(), f"records/{record_id}/workflow-steps")
+        url = build_url(
+            get_base_url(), get_community(), f"records/{record_id}/workflow-steps"
+        )
         response = client.post(url, json=data)
         response.raise_for_status()
         return parse_json_response(response)
@@ -1138,14 +1204,20 @@ def get_record_workflow_step(record_id: str, step_id: str) -> dict[str, Any]:
         >>> print(step)
     """
     with _get_client() as client:
-        url = build_url(get_base_url(), get_community(), f"records/{record_id}/workflow-steps/{step_id}")
+        url = build_url(
+            get_base_url(),
+            get_community(),
+            f"records/{record_id}/workflow-steps/{step_id}",
+        )
         response = client.get(url)
         response.raise_for_status()
         return parse_json_response(response)
 
 
 @handle_request_errors
-def update_record_workflow_step(record_id: str, step_id: str, data: dict[str, Any]) -> dict[str, Any]:
+def update_record_workflow_step(
+    record_id: str, step_id: str, data: dict[str, Any]
+) -> dict[str, Any]:
     """
     Update a workflow step on a record.
 
@@ -1174,7 +1246,11 @@ def update_record_workflow_step(record_id: str, step_id: str, data: dict[str, An
         >>> print(step)
     """
     with _get_client() as client:
-        url = build_url(get_base_url(), get_community(), f"records/{record_id}/workflow-steps/{step_id}")
+        url = build_url(
+            get_base_url(),
+            get_community(),
+            f"records/{record_id}/workflow-steps/{step_id}",
+        )
         response = client.patch(url, json=data)
         response.raise_for_status()
         return parse_json_response(response)
@@ -1208,7 +1284,11 @@ def delete_record_workflow_step(record_id: str, step_id: str) -> dict[str, Any]:
         >>> print(result)
     """
     with _get_client() as client:
-        url = build_url(get_base_url(), get_community(), f"records/{record_id}/workflow-steps/{step_id}")
+        url = build_url(
+            get_base_url(),
+            get_community(),
+            f"records/{record_id}/workflow-steps/{step_id}",
+        )
         response = client.delete(url)
         response.raise_for_status()
         return parse_json_response(response)
@@ -1243,14 +1323,20 @@ def list_record_workflow_step_comments(record_id: str, step_id: str) -> dict[str
         >>> print(comments)
     """
     with _get_client() as client:
-        url = build_url(get_base_url(), get_community(), f"records/{record_id}/workflow-steps/{step_id}/comments")
+        url = build_url(
+            get_base_url(),
+            get_community(),
+            f"records/{record_id}/workflow-steps/{step_id}/comments",
+        )
         response = client.get(url)
         response.raise_for_status()
         return parse_json_response(response)
 
 
 @handle_request_errors
-def create_record_workflow_step_comment(record_id: str, step_id: str, data: dict[str, Any]) -> dict[str, Any]:
+def create_record_workflow_step_comment(
+    record_id: str, step_id: str, data: dict[str, Any]
+) -> dict[str, Any]:
     """
     Create a comment on a workflow step.
 
@@ -1279,14 +1365,20 @@ def create_record_workflow_step_comment(record_id: str, step_id: str, data: dict
         >>> print(comment)
     """
     with _get_client() as client:
-        url = build_url(get_base_url(), get_community(), f"records/{record_id}/workflow-steps/{step_id}/comments")
+        url = build_url(
+            get_base_url(),
+            get_community(),
+            f"records/{record_id}/workflow-steps/{step_id}/comments",
+        )
         response = client.post(url, json=data)
         response.raise_for_status()
         return parse_json_response(response)
 
 
 @handle_request_errors
-def get_record_workflow_step_comment(record_id: str, step_id: str, comment_id: str) -> dict[str, Any]:
+def get_record_workflow_step_comment(
+    record_id: str, step_id: str, comment_id: str
+) -> dict[str, Any]:
     """
     Get a specific comment on a workflow step.
 
@@ -1314,14 +1406,20 @@ def get_record_workflow_step_comment(record_id: str, step_id: str, comment_id: s
         >>> print(comment)
     """
     with _get_client() as client:
-        url = build_url(get_base_url(), get_community(), f"records/{record_id}/workflow-steps/{step_id}/comments/{comment_id}")
+        url = build_url(
+            get_base_url(),
+            get_community(),
+            f"records/{record_id}/workflow-steps/{step_id}/comments/{comment_id}",
+        )
         response = client.get(url)
         response.raise_for_status()
         return parse_json_response(response)
 
 
 @handle_request_errors
-def delete_record_workflow_step_comment(record_id: str, step_id: str, comment_id: str) -> dict[str, Any]:
+def delete_record_workflow_step_comment(
+    record_id: str, step_id: str, comment_id: str
+) -> dict[str, Any]:
     """
     Delete a comment from a workflow step.
 
@@ -1349,7 +1447,11 @@ def delete_record_workflow_step_comment(record_id: str, step_id: str, comment_id
         >>> print(result)
     """
     with _get_client() as client:
-        url = build_url(get_base_url(), get_community(), f"records/{record_id}/workflow-steps/{step_id}/comments/{comment_id}")
+        url = build_url(
+            get_base_url(),
+            get_community(),
+            f"records/{record_id}/workflow-steps/{step_id}/comments/{comment_id}",
+        )
         response = client.delete(url)
         response.raise_for_status()
         return parse_json_response(response)
@@ -1383,7 +1485,9 @@ def list_record_collections(record_id: str) -> dict[str, Any]:
         >>> print(collections)
     """
     with _get_client() as client:
-        url = build_url(get_base_url(), get_community(), f"records/{record_id}/collections")
+        url = build_url(
+            get_base_url(), get_community(), f"records/{record_id}/collections"
+        )
         response = client.get(url)
         response.raise_for_status()
         return parse_json_response(response)
@@ -1417,14 +1521,20 @@ def get_record_collection(record_id: str, collection_id: str) -> dict[str, Any]:
         >>> print(collection)
     """
     with _get_client() as client:
-        url = build_url(get_base_url(), get_community(), f"records/{record_id}/collections/{collection_id}")
+        url = build_url(
+            get_base_url(),
+            get_community(),
+            f"records/{record_id}/collections/{collection_id}",
+        )
         response = client.get(url)
         response.raise_for_status()
         return parse_json_response(response)
 
 
 @handle_request_errors
-def create_record_collection_entry(record_id: str, collection_id: str, data: dict[str, Any]) -> dict[str, Any]:
+def create_record_collection_entry(
+    record_id: str, collection_id: str, data: dict[str, Any]
+) -> dict[str, Any]:
     """
     Create an entry in a record collection.
 
@@ -1453,14 +1563,20 @@ def create_record_collection_entry(record_id: str, collection_id: str, data: dic
         >>> print(entry)
     """
     with _get_client() as client:
-        url = build_url(get_base_url(), get_community(), f"records/{record_id}/collections/{collection_id}")
+        url = build_url(
+            get_base_url(),
+            get_community(),
+            f"records/{record_id}/collections/{collection_id}",
+        )
         response = client.post(url, json=data)
         response.raise_for_status()
         return parse_json_response(response)
 
 
 @handle_request_errors
-def get_record_collection_entry(record_id: str, collection_id: str, entry_id: str) -> dict[str, Any]:
+def get_record_collection_entry(
+    record_id: str, collection_id: str, entry_id: str
+) -> dict[str, Any]:
     """
     Get a specific entry in a record collection.
 
@@ -1488,14 +1604,20 @@ def get_record_collection_entry(record_id: str, collection_id: str, entry_id: st
         >>> print(entry)
     """
     with _get_client() as client:
-        url = build_url(get_base_url(), get_community(), f"records/{record_id}/collections/{collection_id}/entries/{entry_id}")
+        url = build_url(
+            get_base_url(),
+            get_community(),
+            f"records/{record_id}/collections/{collection_id}/entries/{entry_id}",
+        )
         response = client.get(url)
         response.raise_for_status()
         return parse_json_response(response)
 
 
 @handle_request_errors
-def update_record_collection_entry(record_id: str, collection_id: str, entry_id: str, data: dict[str, Any]) -> dict[str, Any]:
+def update_record_collection_entry(
+    record_id: str, collection_id: str, entry_id: str, data: dict[str, Any]
+) -> dict[str, Any]:
     """
     Update an entry in a record collection.
 
@@ -1525,7 +1647,11 @@ def update_record_collection_entry(record_id: str, collection_id: str, entry_id:
         >>> print(entry)
     """
     with _get_client() as client:
-        url = build_url(get_base_url(), get_community(), f"records/{record_id}/collections/{collection_id}/entries/{entry_id}")
+        url = build_url(
+            get_base_url(),
+            get_community(),
+            f"records/{record_id}/collections/{collection_id}/entries/{entry_id}",
+        )
         response = client.patch(url, json=data)
         response.raise_for_status()
         return parse_json_response(response)

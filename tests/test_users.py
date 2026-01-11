@@ -41,11 +41,11 @@ class TestUsersEndpoint:
                 "attributes": {
                     "firstName": "John",
                     "lastName": "Doe",
-                    "email": "john.doe@example.com"
-                }
+                    "email": "john.doe@example.com",
+                },
             }
         }
-        
+
         mock_response = {
             "data": {
                 "id": "user-12345",
@@ -53,17 +53,17 @@ class TestUsersEndpoint:
                 "attributes": {
                     "firstName": "John",
                     "lastName": "Doe",
-                    "email": "john.doe@example.com"
-                }
+                    "email": "john.doe@example.com",
+                },
             }
         }
-        
+
         httpx_mock.add_response(
             url="https://api.plce.opengov.com/plce/v2/testcommunity/users",
             method="POST",
             json=mock_response,
         )
-        
+
         result = opengov_api.create_user(request_data)
         assert result == mock_response
         assert result["data"]["id"] == "user-12345"

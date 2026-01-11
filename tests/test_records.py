@@ -178,7 +178,9 @@ class TestRecordLocations:
         result = opengov_api.get_record_primary_location("123")
         assert result["data"]["id"] == "loc-1"
 
-    def test_update_record_primary_location(self, httpx_mock: HTTPXMock, configure_client):
+    def test_update_record_primary_location(
+        self, httpx_mock: HTTPXMock, configure_client
+    ):
         """Test updating record primary location."""
         url = "https://api.plce.opengov.com/plce/v2/testcommunity/records/123/primary-location"
         location_data = {"data": {"id": "loc-1"}}
@@ -187,7 +189,9 @@ class TestRecordLocations:
         result = opengov_api.update_record_primary_location("123", location_data)
         assert result["data"]["id"] == "loc-1"
 
-    def test_remove_record_primary_location(self, httpx_mock: HTTPXMock, configure_client):
+    def test_remove_record_primary_location(
+        self, httpx_mock: HTTPXMock, configure_client
+    ):
         """Test removing record primary location."""
         url = "https://api.plce.opengov.com/plce/v2/testcommunity/records/123/primary-location"
         httpx_mock.add_response(url=url, json={})
@@ -198,7 +202,9 @@ class TestRecordLocations:
         assert request is not None
         assert request.method == "DELETE"
 
-    def test_list_record_additional_locations(self, httpx_mock: HTTPXMock, configure_client):
+    def test_list_record_additional_locations(
+        self, httpx_mock: HTTPXMock, configure_client
+    ):
         """Test listing record additional locations."""
         url = "https://api.plce.opengov.com/plce/v2/testcommunity/records/123/additional-locations"
         httpx_mock.add_response(url=url, json={"data": []})
@@ -206,7 +212,9 @@ class TestRecordLocations:
         result = opengov_api.list_record_additional_locations("123")
         assert "data" in result
 
-    def test_add_record_additional_location(self, httpx_mock: HTTPXMock, configure_client):
+    def test_add_record_additional_location(
+        self, httpx_mock: HTTPXMock, configure_client
+    ):
         """Test adding an additional location to a record."""
         url = "https://api.plce.opengov.com/plce/v2/testcommunity/records/123/additional-locations"
         location_data = {"data": {"id": "loc-1"}}
@@ -215,7 +223,9 @@ class TestRecordLocations:
         result = opengov_api.add_record_additional_location("123", location_data)
         assert result["data"]["id"] == "loc-1"
 
-    def test_get_record_additional_location(self, httpx_mock: HTTPXMock, configure_client):
+    def test_get_record_additional_location(
+        self, httpx_mock: HTTPXMock, configure_client
+    ):
         """Test getting a specific additional location on a record."""
         url = "https://api.plce.opengov.com/plce/v2/testcommunity/records/123/additional-locations/loc-1"
         httpx_mock.add_response(url=url, json={"data": {"id": "loc-1"}})
@@ -223,7 +233,9 @@ class TestRecordLocations:
         result = opengov_api.get_record_additional_location("123", "loc-1")
         assert result["data"]["id"] == "loc-1"
 
-    def test_remove_record_additional_location(self, httpx_mock: HTTPXMock, configure_client):
+    def test_remove_record_additional_location(
+        self, httpx_mock: HTTPXMock, configure_client
+    ):
         """Test removing an additional location from a record."""
         url = "https://api.plce.opengov.com/plce/v2/testcommunity/records/123/additional-locations/loc-1"
         httpx_mock.add_response(url=url, json={})
@@ -240,7 +252,9 @@ class TestRecordAttachments:
 
     def test_list_record_attachments(self, httpx_mock: HTTPXMock, configure_client):
         """Test listing record attachments."""
-        url = "https://api.plce.opengov.com/plce/v2/testcommunity/records/123/attachments"
+        url = (
+            "https://api.plce.opengov.com/plce/v2/testcommunity/records/123/attachments"
+        )
         httpx_mock.add_response(url=url, json={"data": []})
 
         result = opengov_api.list_record_attachments("123")
@@ -248,7 +262,9 @@ class TestRecordAttachments:
 
     def test_add_record_attachment(self, httpx_mock: HTTPXMock, configure_client):
         """Test adding a record attachment."""
-        url = "https://api.plce.opengov.com/plce/v2/testcommunity/records/123/attachments"
+        url = (
+            "https://api.plce.opengov.com/plce/v2/testcommunity/records/123/attachments"
+        )
         attachment_data = {"data": {"id": "att-1"}}
         httpx_mock.add_response(url=url, json={"data": {"id": "att-1"}})
 
@@ -286,7 +302,9 @@ class TestRecordChangeRequests:
         result = opengov_api.get_record_change_request("123", "cr-1")
         assert result["data"]["id"] == "cr-1"
 
-    def test_get_most_recent_record_change_request(self, httpx_mock: HTTPXMock, configure_client):
+    def test_get_most_recent_record_change_request(
+        self, httpx_mock: HTTPXMock, configure_client
+    ):
         """Test getting the most recent change request."""
         url = "https://api.plce.opengov.com/plce/v2/testcommunity/records/123/change-requests"
         httpx_mock.add_response(url=url, json={"data": {"id": "cr-1"}})
@@ -294,7 +312,9 @@ class TestRecordChangeRequests:
         result = opengov_api.get_most_recent_record_change_request("123")
         assert result["data"]["id"] == "cr-1"
 
-    def test_create_record_change_request(self, httpx_mock: HTTPXMock, configure_client):
+    def test_create_record_change_request(
+        self, httpx_mock: HTTPXMock, configure_client
+    ):
         """Test creating a change request."""
         url = "https://api.plce.opengov.com/plce/v2/testcommunity/records/123/change-requests"
         change_request_data = {"data": {"attributes": {"reason": "Updates needed"}}}
@@ -303,7 +323,9 @@ class TestRecordChangeRequests:
         result = opengov_api.create_record_change_request("123", change_request_data)
         assert result["data"]["id"] == "cr-1"
 
-    def test_cancel_record_change_request(self, httpx_mock: HTTPXMock, configure_client):
+    def test_cancel_record_change_request(
+        self, httpx_mock: HTTPXMock, configure_client
+    ):
         """Test canceling a change request."""
         url = "https://api.plce.opengov.com/plce/v2/testcommunity/records/123/change-requests/cr-1"
         httpx_mock.add_response(url=url, json={})
@@ -367,7 +389,9 @@ class TestRecordWorkflowSteps:
 class TestRecordWorkflowStepComments:
     """Tests for workflow step comment operations."""
 
-    def test_list_record_workflow_step_comments(self, httpx_mock: HTTPXMock, configure_client):
+    def test_list_record_workflow_step_comments(
+        self, httpx_mock: HTTPXMock, configure_client
+    ):
         """Test listing workflow step comments."""
         url = "https://api.plce.opengov.com/plce/v2/testcommunity/records/123/workflow-steps/step-1/comments"
         httpx_mock.add_response(url=url, json={"data": []})
@@ -375,24 +399,34 @@ class TestRecordWorkflowStepComments:
         result = opengov_api.list_record_workflow_step_comments("123", "step-1")
         assert "data" in result
 
-    def test_create_record_workflow_step_comment(self, httpx_mock: HTTPXMock, configure_client):
+    def test_create_record_workflow_step_comment(
+        self, httpx_mock: HTTPXMock, configure_client
+    ):
         """Test creating a workflow step comment."""
         url = "https://api.plce.opengov.com/plce/v2/testcommunity/records/123/workflow-steps/step-1/comments"
         comment_data = {"data": {"attributes": {"text": "Test comment"}}}
         httpx_mock.add_response(url=url, json={"data": {"id": "comment-1"}})
 
-        result = opengov_api.create_record_workflow_step_comment("123", "step-1", comment_data)
+        result = opengov_api.create_record_workflow_step_comment(
+            "123", "step-1", comment_data
+        )
         assert result["data"]["id"] == "comment-1"
 
-    def test_get_record_workflow_step_comment(self, httpx_mock: HTTPXMock, configure_client):
+    def test_get_record_workflow_step_comment(
+        self, httpx_mock: HTTPXMock, configure_client
+    ):
         """Test getting a specific workflow step comment."""
         url = "https://api.plce.opengov.com/plce/v2/testcommunity/records/123/workflow-steps/step-1/comments/comment-1"
         httpx_mock.add_response(url=url, json={"data": {"id": "comment-1"}})
 
-        result = opengov_api.get_record_workflow_step_comment("123", "step-1", "comment-1")
+        result = opengov_api.get_record_workflow_step_comment(
+            "123", "step-1", "comment-1"
+        )
         assert result["data"]["id"] == "comment-1"
 
-    def test_delete_record_workflow_step_comment(self, httpx_mock: HTTPXMock, configure_client):
+    def test_delete_record_workflow_step_comment(
+        self, httpx_mock: HTTPXMock, configure_client
+    ):
         """Test deleting a workflow step comment."""
         url = "https://api.plce.opengov.com/plce/v2/testcommunity/records/123/workflow-steps/step-1/comments/comment-1"
         httpx_mock.add_response(url=url, json={})
@@ -409,7 +443,9 @@ class TestRecordCollections:
 
     def test_list_record_collections(self, httpx_mock: HTTPXMock, configure_client):
         """Test listing record collections."""
-        url = "https://api.plce.opengov.com/plce/v2/testcommunity/records/123/collections"
+        url = (
+            "https://api.plce.opengov.com/plce/v2/testcommunity/records/123/collections"
+        )
         httpx_mock.add_response(url=url, json={"data": []})
 
         result = opengov_api.list_record_collections("123")
@@ -423,7 +459,9 @@ class TestRecordCollections:
         result = opengov_api.get_record_collection("123", "coll-1")
         assert result["data"]["id"] == "coll-1"
 
-    def test_create_record_collection_entry(self, httpx_mock: HTTPXMock, configure_client):
+    def test_create_record_collection_entry(
+        self, httpx_mock: HTTPXMock, configure_client
+    ):
         """Test creating a collection entry."""
         url = "https://api.plce.opengov.com/plce/v2/testcommunity/records/123/collections/coll-1"
         entry_data = {"data": {"attributes": {"value": "test"}}}
@@ -440,11 +478,15 @@ class TestRecordCollections:
         result = opengov_api.get_record_collection_entry("123", "coll-1", "entry-1")
         assert result["data"]["id"] == "entry-1"
 
-    def test_update_record_collection_entry(self, httpx_mock: HTTPXMock, configure_client):
+    def test_update_record_collection_entry(
+        self, httpx_mock: HTTPXMock, configure_client
+    ):
         """Test updating a collection entry."""
         url = "https://api.plce.opengov.com/plce/v2/testcommunity/records/123/collections/coll-1/entries/entry-1"
         entry_data = {"data": {"attributes": {"value": "updated"}}}
         httpx_mock.add_response(url=url, json={"data": {"id": "entry-1"}})
 
-        result = opengov_api.update_record_collection_entry("123", "coll-1", "entry-1", entry_data)
+        result = opengov_api.update_record_collection_entry(
+            "123", "coll-1", "entry-1", entry_data
+        )
         assert result["data"]["id"] == "entry-1"
