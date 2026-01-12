@@ -56,13 +56,25 @@ from typing import Any, Iterator
 from .base import build_url, handle_request_errors, parse_json_response
 from .client import _get_client, get_base_url, get_community
 from .models import (
+    AttachmentResource,
+    CollectionResource,
     DateRangeFilter,
+    GuestResource,
     JSONAPIResponse,
     Links,
+    ListRecordAdditionalLocationsParams,
+    ListRecordAttachmentsParams,
+    ListRecordCollectionsParams,
+    ListRecordGuestsParams,
     ListRecordsParams,
+    ListRecordWorkflowStepCommentsParams,
+    ListRecordWorkflowStepsParams,
+    LocationResource,
     Meta,
     RecordResource,
     RecordStatus,
+    WorkflowStepCommentResource,
+    WorkflowStepResource,
 )
 
 
@@ -297,6 +309,303 @@ def iter_records(
             yield response.data
 
         # Check if there's a next page
+        if not response.has_next_page():
+            break
+
+        page += 1
+
+
+@handle_request_errors
+def iter_record_guests(
+    record_id: str,
+    *,
+    page_size: int = 100,
+    include: list[str] | None = None,
+    fields: dict[str, list[str]] | None = None,
+    sort: str | None = None,
+) -> Iterator[GuestResource]:
+    """
+    Iterate through all guests for a record, automatically handling pagination.
+
+    Args:
+        record_id: The ID of the record
+        page_size: Number of records per page (1-100, default 100 for efficiency)
+        include: List of related resources to include
+        fields: Sparse fieldsets dict
+        sort: Sort order
+
+    Yields:
+        GuestResource objects one at a time across all pages
+
+    Example:
+        >>> for guest in opengov_api.iter_record_guests("12345"):
+        ...     print(f"{guest.attributes.name}")
+    """
+    page = 1
+    while True:
+        response = list_record_guests(
+            record_id=record_id,
+            page_number=page,
+            page_size=page_size,
+            include=include,
+            fields=fields,
+            sort=sort,
+        )
+
+        if isinstance(response.data, list):
+            for item in response.data:
+                yield item
+        else:
+            yield response.data
+
+        if not response.has_next_page():
+            break
+
+        page += 1
+
+
+@handle_request_errors
+def iter_record_additional_locations(
+    record_id: str,
+    *,
+    page_size: int = 100,
+    include: list[str] | None = None,
+    fields: dict[str, list[str]] | None = None,
+    sort: str | None = None,
+) -> Iterator[LocationResource]:
+    """
+    Iterate through all additional locations for a record, automatically handling pagination.
+
+    Args:
+        record_id: The ID of the record
+        page_size: Number of records per page (1-100, default 100 for efficiency)
+        include: List of related resources to include
+        fields: Sparse fieldsets dict
+        sort: Sort order
+
+    Yields:
+        LocationResource objects one at a time across all pages
+
+    Example:
+        >>> for location in opengov_api.iter_record_additional_locations("12345"):
+        ...     print(f"{location.attributes.address}")
+    """
+    page = 1
+    while True:
+        response = list_record_additional_locations(
+            record_id=record_id,
+            page_number=page,
+            page_size=page_size,
+            include=include,
+            fields=fields,
+            sort=sort,
+        )
+
+        if isinstance(response.data, list):
+            for item in response.data:
+                yield item
+        else:
+            yield response.data
+
+        if not response.has_next_page():
+            break
+
+        page += 1
+
+
+@handle_request_errors
+def iter_record_attachments(
+    record_id: str,
+    *,
+    page_size: int = 100,
+    include: list[str] | None = None,
+    fields: dict[str, list[str]] | None = None,
+    sort: str | None = None,
+) -> Iterator[AttachmentResource]:
+    """
+    Iterate through all attachments for a record, automatically handling pagination.
+
+    Args:
+        record_id: The ID of the record
+        page_size: Number of records per page (1-100, default 100 for efficiency)
+        include: List of related resources to include
+        fields: Sparse fieldsets dict
+        sort: Sort order
+
+    Yields:
+        AttachmentResource objects one at a time across all pages
+
+    Example:
+        >>> for attachment in opengov_api.iter_record_attachments("12345"):
+        ...     print(f"{attachment.attributes.filename}")
+    """
+    page = 1
+    while True:
+        response = list_record_attachments(
+            record_id=record_id,
+            page_number=page,
+            page_size=page_size,
+            include=include,
+            fields=fields,
+            sort=sort,
+        )
+
+        if isinstance(response.data, list):
+            for item in response.data:
+                yield item
+        else:
+            yield response.data
+
+        if not response.has_next_page():
+            break
+
+        page += 1
+
+
+@handle_request_errors
+def iter_record_workflow_steps(
+    record_id: str,
+    *,
+    page_size: int = 100,
+    include: list[str] | None = None,
+    fields: dict[str, list[str]] | None = None,
+    sort: str | None = None,
+) -> Iterator[WorkflowStepResource]:
+    """
+    Iterate through all workflow steps for a record, automatically handling pagination.
+
+    Args:
+        record_id: The ID of the record
+        page_size: Number of records per page (1-100, default 100 for efficiency)
+        include: List of related resources to include
+        fields: Sparse fieldsets dict
+        sort: Sort order
+
+    Yields:
+        WorkflowStepResource objects one at a time across all pages
+
+    Example:
+        >>> for step in opengov_api.iter_record_workflow_steps("12345"):
+        ...     print(f"{step.attributes.name}")
+    """
+    page = 1
+    while True:
+        response = list_record_workflow_steps(
+            record_id=record_id,
+            page_number=page,
+            page_size=page_size,
+            include=include,
+            fields=fields,
+            sort=sort,
+        )
+
+        if isinstance(response.data, list):
+            for item in response.data:
+                yield item
+        else:
+            yield response.data
+
+        if not response.has_next_page():
+            break
+
+        page += 1
+
+
+@handle_request_errors
+def iter_record_workflow_step_comments(
+    record_id: str,
+    step_id: str,
+    *,
+    page_size: int = 100,
+    include: list[str] | None = None,
+    fields: dict[str, list[str]] | None = None,
+    sort: str | None = None,
+) -> Iterator[WorkflowStepCommentResource]:
+    """
+    Iterate through all comments for a workflow step, automatically handling pagination.
+
+    Args:
+        record_id: The ID of the record
+        step_id: The ID of the workflow step
+        page_size: Number of records per page (1-100, default 100 for efficiency)
+        include: List of related resources to include
+        fields: Sparse fieldsets dict
+        sort: Sort order
+
+    Yields:
+        WorkflowStepCommentResource objects one at a time across all pages
+
+    Example:
+        >>> for comment in opengov_api.iter_record_workflow_step_comments("12345", "step-123"):
+        ...     print(f"{comment.attributes.text}")
+    """
+    page = 1
+    while True:
+        response = list_record_workflow_step_comments(
+            record_id=record_id,
+            step_id=step_id,
+            page_number=page,
+            page_size=page_size,
+            include=include,
+            fields=fields,
+            sort=sort,
+        )
+
+        if isinstance(response.data, list):
+            for item in response.data:
+                yield item
+        else:
+            yield response.data
+
+        if not response.has_next_page():
+            break
+
+        page += 1
+
+
+@handle_request_errors
+def iter_record_collections(
+    record_id: str,
+    *,
+    page_size: int = 100,
+    include: list[str] | None = None,
+    fields: dict[str, list[str]] | None = None,
+    sort: str | None = None,
+) -> Iterator[CollectionResource]:
+    """
+    Iterate through all collections for a record, automatically handling pagination.
+
+    Args:
+        record_id: The ID of the record
+        page_size: Number of records per page (1-100, default 100 for efficiency)
+        include: List of related resources to include
+        fields: Sparse fieldsets dict
+        sort: Sort order
+
+    Yields:
+        CollectionResource objects one at a time across all pages
+
+    Example:
+        >>> for collection in opengov_api.iter_record_collections("12345"):
+        ...     print(f"{collection.attributes.name}")
+    """
+    page = 1
+    while True:
+        response = list_record_collections(
+            record_id=record_id,
+            page_number=page,
+            page_size=page_size,
+            include=include,
+            fields=fields,
+            sort=sort,
+        )
+
+        if isinstance(response.data, list):
+            for item in response.data:
+                yield item
+        else:
+            yield response.data
+
         if not response.has_next_page():
             break
 
@@ -616,15 +925,28 @@ def remove_record_applicant(record_id: str) -> dict[str, Any]:
 
 # Record Guests endpoints
 @handle_request_errors
-def list_record_guests(record_id: str) -> dict[str, Any]:
+def list_record_guests(
+    record_id: str,
+    *,
+    page_number: int = 1,
+    page_size: int = 20,
+    include: list[str] | None = None,
+    fields: dict[str, list[str]] | None = None,
+    sort: str | None = None,
+) -> JSONAPIResponse[GuestResource]:
     """
-    List guests for a record.
+    List guests for a record with pagination.
 
     Args:
         record_id: The ID of the record
+        page_number: Page number (1-based, default 1)
+        page_size: Number of records per page (1-100, default 20)
+        include: List of related resources to include
+        fields: Sparse fieldsets dict (e.g., {"guests": ["name", "email"]})
+        sort: Sort order (e.g., "name", "-createdAt")
 
     Returns:
-        Dictionary containing guests data from the API
+        JSONAPIResponse containing GuestResource objects with pagination info
 
     Raises:
         OpenGovConfigurationError: If API key or community is not configured
@@ -632,20 +954,36 @@ def list_record_guests(record_id: str) -> dict[str, Any]:
         OpenGovAPITimeoutError: If request times out
         OpenGovNotFoundError: If record is not found (404)
         OpenGovAPIStatusError: If API returns an error status code
-        OpenGovResponseParseError: If response cannot be parsed as JSON
+        OpenGovResponseParseError: If response cannot be parsed
 
     Example:
         >>> import opengov_api
         >>> opengov_api.set_api_key("your-api-key")
         >>> opengov_api.set_community("your-community")
-        >>> guests = opengov_api.list_record_guests("12345")
-        >>> print(guests)
+        >>> response = opengov_api.list_record_guests("12345")
+        >>> for guest in response.data:
+        ...     print(f"{guest.attributes.name}: {guest.attributes.email}")
     """
+    params_model = ListRecordGuestsParams(
+        page_number=page_number,
+        page_size=page_size,
+        include=include,
+        fields=fields,
+        sort=sort,
+    )
+
     with _get_client() as client:
         url = build_url(get_base_url(), get_community(), f"records/{record_id}/guests")
-        response = client.get(url)
+        response = client.get(url, params=params_model.to_query_params())
         response.raise_for_status()
-        return parse_json_response(response)
+        data = parse_json_response(response)
+
+        return JSONAPIResponse[GuestResource](
+            data=[GuestResource(**item) for item in data["data"]],
+            included=data.get("included"),
+            links=Links(**data["links"]) if data.get("links") else None,
+            meta=Meta(**data["meta"]) if data.get("meta") else None,
+        )
 
 
 @handle_request_errors
@@ -867,15 +1205,28 @@ def remove_record_primary_location(record_id: str) -> dict[str, Any]:
 
 # Record Additional Locations endpoints
 @handle_request_errors
-def list_record_additional_locations(record_id: str) -> dict[str, Any]:
+def list_record_additional_locations(
+    record_id: str,
+    *,
+    page_number: int = 1,
+    page_size: int = 20,
+    include: list[str] | None = None,
+    fields: dict[str, list[str]] | None = None,
+    sort: str | None = None,
+) -> JSONAPIResponse[LocationResource]:
     """
-    List additional locations for a record.
+    List additional locations for a record with pagination.
 
     Args:
         record_id: The ID of the record
+        page_number: Page number (1-based, default 1)
+        page_size: Number of records per page (1-100, default 20)
+        include: List of related resources to include
+        fields: Sparse fieldsets dict (e.g., {"locations": ["address", "city"]})
+        sort: Sort order (e.g., "address", "-createdAt")
 
     Returns:
-        Dictionary containing additional locations data from the API
+        JSONAPIResponse containing LocationResource objects with pagination info
 
     Raises:
         OpenGovConfigurationError: If API key or community is not configured
@@ -883,22 +1234,38 @@ def list_record_additional_locations(record_id: str) -> dict[str, Any]:
         OpenGovAPITimeoutError: If request times out
         OpenGovNotFoundError: If record is not found (404)
         OpenGovAPIStatusError: If API returns an error status code
-        OpenGovResponseParseError: If response cannot be parsed as JSON
+        OpenGovResponseParseError: If response cannot be parsed
 
     Example:
         >>> import opengov_api
         >>> opengov_api.set_api_key("your-api-key")
         >>> opengov_api.set_community("your-community")
-        >>> locations = opengov_api.list_record_additional_locations("12345")
-        >>> print(locations)
+        >>> response = opengov_api.list_record_additional_locations("12345")
+        >>> for location in response.data:
+        ...     print(f"{location.attributes.address}")
     """
+    params_model = ListRecordAdditionalLocationsParams(
+        page_number=page_number,
+        page_size=page_size,
+        include=include,
+        fields=fields,
+        sort=sort,
+    )
+
     with _get_client() as client:
         url = build_url(
             get_base_url(), get_community(), f"records/{record_id}/additional-locations"
         )
-        response = client.get(url)
+        response = client.get(url, params=params_model.to_query_params())
         response.raise_for_status()
-        return parse_json_response(response)
+        data = parse_json_response(response)
+
+        return JSONAPIResponse[LocationResource](
+            data=[LocationResource(**item) for item in data["data"]],
+            included=data.get("included"),
+            links=Links(**data["links"]) if data.get("links") else None,
+            meta=Meta(**data["meta"]) if data.get("meta") else None,
+        )
 
 
 @handle_request_errors
@@ -1020,15 +1387,28 @@ def remove_record_additional_location(
 
 # Record Attachments endpoints
 @handle_request_errors
-def list_record_attachments(record_id: str) -> dict[str, Any]:
+def list_record_attachments(
+    record_id: str,
+    *,
+    page_number: int = 1,
+    page_size: int = 20,
+    include: list[str] | None = None,
+    fields: dict[str, list[str]] | None = None,
+    sort: str | None = None,
+) -> JSONAPIResponse[AttachmentResource]:
     """
-    List attachments for a record.
+    List attachments for a record with pagination.
 
     Args:
         record_id: The ID of the record
+        page_number: Page number (1-based, default 1)
+        page_size: Number of records per page (1-100, default 20)
+        include: List of related resources to include
+        fields: Sparse fieldsets dict (e.g., {"attachments": ["filename", "size"]})
+        sort: Sort order (e.g., "filename", "-createdAt")
 
     Returns:
-        Dictionary containing attachments data from the API
+        JSONAPIResponse containing AttachmentResource objects with pagination info
 
     Raises:
         OpenGovConfigurationError: If API key or community is not configured
@@ -1036,22 +1416,38 @@ def list_record_attachments(record_id: str) -> dict[str, Any]:
         OpenGovAPITimeoutError: If request times out
         OpenGovNotFoundError: If record is not found (404)
         OpenGovAPIStatusError: If API returns an error status code
-        OpenGovResponseParseError: If response cannot be parsed as JSON
+        OpenGovResponseParseError: If response cannot be parsed
 
     Example:
         >>> import opengov_api
         >>> opengov_api.set_api_key("your-api-key")
         >>> opengov_api.set_community("your-community")
-        >>> attachments = opengov_api.list_record_attachments("12345")
-        >>> print(attachments)
+        >>> response = opengov_api.list_record_attachments("12345")
+        >>> for attachment in response.data:
+        ...     print(f"{attachment.attributes.filename}: {attachment.attributes.size} bytes")
     """
+    params_model = ListRecordAttachmentsParams(
+        page_number=page_number,
+        page_size=page_size,
+        include=include,
+        fields=fields,
+        sort=sort,
+    )
+
     with _get_client() as client:
         url = build_url(
             get_base_url(), get_community(), f"records/{record_id}/attachments"
         )
-        response = client.get(url)
+        response = client.get(url, params=params_model.to_query_params())
         response.raise_for_status()
-        return parse_json_response(response)
+        data = parse_json_response(response)
+
+        return JSONAPIResponse[AttachmentResource](
+            data=[AttachmentResource(**item) for item in data["data"]],
+            included=data.get("included"),
+            links=Links(**data["links"]) if data.get("links") else None,
+            meta=Meta(**data["meta"]) if data.get("meta") else None,
+        )
 
 
 @handle_request_errors
@@ -1322,15 +1718,28 @@ def cancel_record_change_request(
 
 # Record Workflow Steps endpoints
 @handle_request_errors
-def list_record_workflow_steps(record_id: str) -> dict[str, Any]:
+def list_record_workflow_steps(
+    record_id: str,
+    *,
+    page_number: int = 1,
+    page_size: int = 20,
+    include: list[str] | None = None,
+    fields: dict[str, list[str]] | None = None,
+    sort: str | None = None,
+) -> JSONAPIResponse[WorkflowStepResource]:
     """
-    List workflow steps for a record.
+    List workflow steps for a record with pagination.
 
     Args:
         record_id: The ID of the record
+        page_number: Page number (1-based, default 1)
+        page_size: Number of records per page (1-100, default 20)
+        include: List of related resources to include
+        fields: Sparse fieldsets dict (e.g., {"workflow-steps": ["name", "status"]})
+        sort: Sort order (e.g., "name", "-createdAt")
 
     Returns:
-        Dictionary containing workflow steps data from the API
+        JSONAPIResponse containing WorkflowStepResource objects with pagination info
 
     Raises:
         OpenGovConfigurationError: If API key or community is not configured
@@ -1338,22 +1747,38 @@ def list_record_workflow_steps(record_id: str) -> dict[str, Any]:
         OpenGovAPITimeoutError: If request times out
         OpenGovNotFoundError: If record is not found (404)
         OpenGovAPIStatusError: If API returns an error status code
-        OpenGovResponseParseError: If response cannot be parsed as JSON
+        OpenGovResponseParseError: If response cannot be parsed
 
     Example:
         >>> import opengov_api
         >>> opengov_api.set_api_key("your-api-key")
         >>> opengov_api.set_community("your-community")
-        >>> steps = opengov_api.list_record_workflow_steps("12345")
-        >>> print(steps)
+        >>> response = opengov_api.list_record_workflow_steps("12345")
+        >>> for step in response.data:
+        ...     print(f"{step.attributes.name}: {step.attributes.status}")
     """
+    params_model = ListRecordWorkflowStepsParams(
+        page_number=page_number,
+        page_size=page_size,
+        include=include,
+        fields=fields,
+        sort=sort,
+    )
+
     with _get_client() as client:
         url = build_url(
             get_base_url(), get_community(), f"records/{record_id}/workflow-steps"
         )
-        response = client.get(url)
+        response = client.get(url, params=params_model.to_query_params())
         response.raise_for_status()
-        return parse_json_response(response)
+        data = parse_json_response(response)
+
+        return JSONAPIResponse[WorkflowStepResource](
+            data=[WorkflowStepResource(**item) for item in data["data"]],
+            included=data.get("included"),
+            links=Links(**data["links"]) if data.get("links") else None,
+            meta=Meta(**data["meta"]) if data.get("meta") else None,
+        )
 
 
 @handle_request_errors
@@ -1513,16 +1938,30 @@ def delete_record_workflow_step(record_id: str, step_id: str) -> dict[str, Any]:
 
 # Record Workflow Step Comments endpoints
 @handle_request_errors
-def list_record_workflow_step_comments(record_id: str, step_id: str) -> dict[str, Any]:
+def list_record_workflow_step_comments(
+    record_id: str,
+    step_id: str,
+    *,
+    page_number: int = 1,
+    page_size: int = 20,
+    include: list[str] | None = None,
+    fields: dict[str, list[str]] | None = None,
+    sort: str | None = None,
+) -> JSONAPIResponse[WorkflowStepCommentResource]:
     """
-    List comments for a workflow step on a record.
+    List comments for a workflow step on a record with pagination.
 
     Args:
         record_id: The ID of the record
         step_id: The ID of the workflow step
+        page_number: Page number (1-based, default 1)
+        page_size: Number of records per page (1-100, default 20)
+        include: List of related resources to include
+        fields: Sparse fieldsets dict (e.g., {"comments": ["text", "createdBy"]})
+        sort: Sort order (e.g., "createdAt", "-createdAt")
 
     Returns:
-        Dictionary containing comments data from the API
+        JSONAPIResponse containing WorkflowStepCommentResource objects with pagination info
 
     Raises:
         OpenGovConfigurationError: If API key or community is not configured
@@ -1530,24 +1969,40 @@ def list_record_workflow_step_comments(record_id: str, step_id: str) -> dict[str
         OpenGovAPITimeoutError: If request times out
         OpenGovNotFoundError: If record or step is not found (404)
         OpenGovAPIStatusError: If API returns an error status code
-        OpenGovResponseParseError: If response cannot be parsed as JSON
+        OpenGovResponseParseError: If response cannot be parsed
 
     Example:
         >>> import opengov_api
         >>> opengov_api.set_api_key("your-api-key")
         >>> opengov_api.set_community("your-community")
-        >>> comments = opengov_api.list_record_workflow_step_comments("12345", "step-123")
-        >>> print(comments)
+        >>> response = opengov_api.list_record_workflow_step_comments("12345", "step-123")
+        >>> for comment in response.data:
+        ...     print(f"{comment.attributes.text}")
     """
+    params_model = ListRecordWorkflowStepCommentsParams(
+        page_number=page_number,
+        page_size=page_size,
+        include=include,
+        fields=fields,
+        sort=sort,
+    )
+
     with _get_client() as client:
         url = build_url(
             get_base_url(),
             get_community(),
             f"records/{record_id}/workflow-steps/{step_id}/comments",
         )
-        response = client.get(url)
+        response = client.get(url, params=params_model.to_query_params())
         response.raise_for_status()
-        return parse_json_response(response)
+        data = parse_json_response(response)
+
+        return JSONAPIResponse[WorkflowStepCommentResource](
+            data=[WorkflowStepCommentResource(**item) for item in data["data"]],
+            included=data.get("included"),
+            links=Links(**data["links"]) if data.get("links") else None,
+            meta=Meta(**data["meta"]) if data.get("meta") else None,
+        )
 
 
 @handle_request_errors
@@ -1676,15 +2131,28 @@ def delete_record_workflow_step_comment(
 
 # Record Collections endpoints
 @handle_request_errors
-def list_record_collections(record_id: str) -> dict[str, Any]:
+def list_record_collections(
+    record_id: str,
+    *,
+    page_number: int = 1,
+    page_size: int = 20,
+    include: list[str] | None = None,
+    fields: dict[str, list[str]] | None = None,
+    sort: str | None = None,
+) -> JSONAPIResponse[CollectionResource]:
     """
-    List collections for a record.
+    List collections for a record with pagination.
 
     Args:
         record_id: The ID of the record
+        page_number: Page number (1-based, default 1)
+        page_size: Number of records per page (1-100, default 20)
+        include: List of related resources to include
+        fields: Sparse fieldsets dict (e.g., {"collections": ["name", "collectionType"]})
+        sort: Sort order (e.g., "name", "-createdAt")
 
     Returns:
-        Dictionary containing collections data from the API
+        JSONAPIResponse containing CollectionResource objects with pagination info
 
     Raises:
         OpenGovConfigurationError: If API key or community is not configured
@@ -1692,22 +2160,38 @@ def list_record_collections(record_id: str) -> dict[str, Any]:
         OpenGovAPITimeoutError: If request times out
         OpenGovNotFoundError: If record is not found (404)
         OpenGovAPIStatusError: If API returns an error status code
-        OpenGovResponseParseError: If response cannot be parsed as JSON
+        OpenGovResponseParseError: If response cannot be parsed
 
     Example:
         >>> import opengov_api
         >>> opengov_api.set_api_key("your-api-key")
         >>> opengov_api.set_community("your-community")
-        >>> collections = opengov_api.list_record_collections("12345")
-        >>> print(collections)
+        >>> response = opengov_api.list_record_collections("12345")
+        >>> for collection in response.data:
+        ...     print(f"{collection.attributes.name}")
     """
+    params_model = ListRecordCollectionsParams(
+        page_number=page_number,
+        page_size=page_size,
+        include=include,
+        fields=fields,
+        sort=sort,
+    )
+
     with _get_client() as client:
         url = build_url(
             get_base_url(), get_community(), f"records/{record_id}/collections"
         )
-        response = client.get(url)
+        response = client.get(url, params=params_model.to_query_params())
         response.raise_for_status()
-        return parse_json_response(response)
+        data = parse_json_response(response)
+
+        return JSONAPIResponse[CollectionResource](
+            data=[CollectionResource(**item) for item in data["data"]],
+            included=data.get("included"),
+            links=Links(**data["links"]) if data.get("links") else None,
+            meta=Meta(**data["meta"]) if data.get("meta") else None,
+        )
 
 
 @handle_request_errors

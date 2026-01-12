@@ -80,3 +80,144 @@ class RecordUpdateRequest(BaseModel):
     """Request body for updating a record."""
 
     data: RecordUpdateData
+
+
+# Guest models
+class GuestAttributes(BaseModel):
+    """Guest attributes."""
+
+    email: str | None = None
+    name: str | None = None
+    user_id: str | None = Field(None, alias="userID")
+    created_at: datetime | None = Field(None, alias="createdAt")
+
+    model_config = {"populate_by_name": True}
+
+
+class GuestResource(BaseModel):
+    """Guest resource object."""
+
+    id: str
+    type: str
+    attributes: GuestAttributes
+    relationships: dict[str, Any] | None = None
+    links: dict[str, str] | None = None
+
+
+# Location models
+class LocationAttributes(BaseModel):
+    """Location attributes."""
+
+    address: str | None = None
+    city: str | None = None
+    state: str | None = None
+    zip_code: str | None = Field(None, alias="zipCode")
+    latitude: float | None = None
+    longitude: float | None = None
+    created_at: datetime | None = Field(None, alias="createdAt")
+    updated_at: datetime | None = Field(None, alias="updatedAt")
+
+    model_config = {"populate_by_name": True}
+
+
+class LocationResource(BaseModel):
+    """Location resource object."""
+
+    id: str
+    type: str
+    attributes: LocationAttributes
+    relationships: dict[str, Any] | None = None
+    links: dict[str, str] | None = None
+
+
+# Attachment models
+class AttachmentAttributes(BaseModel):
+    """Attachment attributes."""
+
+    filename: str | None = None
+    content_type: str | None = Field(None, alias="contentType")
+    size: int | None = None
+    url: str | None = None
+    created_at: datetime | None = Field(None, alias="createdAt")
+    created_by: str | None = Field(None, alias="createdBy")
+
+    model_config = {"populate_by_name": True}
+
+
+class AttachmentResource(BaseModel):
+    """Attachment resource object."""
+
+    id: str
+    type: str
+    attributes: AttachmentAttributes
+    relationships: dict[str, Any] | None = None
+    links: dict[str, str] | None = None
+
+
+# Workflow Step models
+class WorkflowStepAttributes(BaseModel):
+    """Workflow step attributes."""
+
+    name: str | None = None
+    status: str | None = None
+    step_type: str | None = Field(None, alias="stepType")
+    assigned_to: str | None = Field(None, alias="assignedTo")
+    due_date: datetime | None = Field(None, alias="dueDate")
+    completed_at: datetime | None = Field(None, alias="completedAt")
+    created_at: datetime | None = Field(None, alias="createdAt")
+    updated_at: datetime | None = Field(None, alias="updatedAt")
+
+    model_config = {"populate_by_name": True}
+
+
+class WorkflowStepResource(BaseModel):
+    """Workflow step resource object."""
+
+    id: str
+    type: str
+    attributes: WorkflowStepAttributes
+    relationships: dict[str, Any] | None = None
+    links: dict[str, str] | None = None
+
+
+# Workflow Step Comment models
+class WorkflowStepCommentAttributes(BaseModel):
+    """Workflow step comment attributes."""
+
+    text: str | None = None
+    created_by: str | None = Field(None, alias="createdBy")
+    created_at: datetime | None = Field(None, alias="createdAt")
+
+    model_config = {"populate_by_name": True}
+
+
+class WorkflowStepCommentResource(BaseModel):
+    """Workflow step comment resource object."""
+
+    id: str
+    type: str
+    attributes: WorkflowStepCommentAttributes
+    relationships: dict[str, Any] | None = None
+    links: dict[str, str] | None = None
+
+
+# Collection models
+class CollectionAttributes(BaseModel):
+    """Collection attributes."""
+
+    name: str | None = None
+    collection_type: str | None = Field(None, alias="collectionType")
+    created_at: datetime | None = Field(None, alias="createdAt")
+    updated_at: datetime | None = Field(None, alias="updatedAt")
+
+    model_config = {"populate_by_name": True}
+
+
+class CollectionResource(BaseModel):
+    """Collection resource object."""
+
+    id: str
+    type: str
+    attributes: CollectionAttributes
+    relationships: dict[str, Any] | None = None
+    links: dict[str, str] | None = None

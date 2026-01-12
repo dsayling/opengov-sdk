@@ -132,11 +132,16 @@ class TestRecordGuests:
 
     def test_list_record_guests(self, httpx_mock: HTTPXMock, configure_client):
         """Test listing record guests."""
+        import re
+
         url = "https://api.plce.opengov.com/plce/v2/testcommunity/records/123/guests"
-        httpx_mock.add_response(url=url, json={"data": []})
+        httpx_mock.add_response(
+            url=re.compile(re.escape(url) + r"(\?.*)?$"),
+            json={"data": [], "meta": {}, "links": {}},
+        )
 
         result = opengov_api.list_record_guests("123")
-        assert "data" in result
+        assert result.data == []
 
     def test_add_record_guest(self, httpx_mock: HTTPXMock, configure_client):
         """Test adding a record guest."""
@@ -206,11 +211,16 @@ class TestRecordLocations:
         self, httpx_mock: HTTPXMock, configure_client
     ):
         """Test listing record additional locations."""
+        import re
+
         url = "https://api.plce.opengov.com/plce/v2/testcommunity/records/123/additional-locations"
-        httpx_mock.add_response(url=url, json={"data": []})
+        httpx_mock.add_response(
+            url=re.compile(re.escape(url) + r"(\?.*)?$"),
+            json={"data": [], "meta": {}, "links": {}},
+        )
 
         result = opengov_api.list_record_additional_locations("123")
-        assert "data" in result
+        assert result.data == []
 
     def test_add_record_additional_location(
         self, httpx_mock: HTTPXMock, configure_client
@@ -252,13 +262,18 @@ class TestRecordAttachments:
 
     def test_list_record_attachments(self, httpx_mock: HTTPXMock, configure_client):
         """Test listing record attachments."""
+        import re
+
         url = (
             "https://api.plce.opengov.com/plce/v2/testcommunity/records/123/attachments"
         )
-        httpx_mock.add_response(url=url, json={"data": []})
+        httpx_mock.add_response(
+            url=re.compile(re.escape(url) + r"(\?.*)?$"),
+            json={"data": [], "meta": {}, "links": {}},
+        )
 
         result = opengov_api.list_record_attachments("123")
-        assert "data" in result
+        assert result.data == []
 
     def test_add_record_attachment(self, httpx_mock: HTTPXMock, configure_client):
         """Test adding a record attachment."""
@@ -342,11 +357,16 @@ class TestRecordWorkflowSteps:
 
     def test_list_record_workflow_steps(self, httpx_mock: HTTPXMock, configure_client):
         """Test listing record workflow steps."""
+        import re
+
         url = "https://api.plce.opengov.com/plce/v2/testcommunity/records/123/workflow-steps"
-        httpx_mock.add_response(url=url, json={"data": []})
+        httpx_mock.add_response(
+            url=re.compile(re.escape(url) + r"(\?.*)?$"),
+            json={"data": [], "meta": {}, "links": {}},
+        )
 
         result = opengov_api.list_record_workflow_steps("123")
-        assert "data" in result
+        assert result.data == []
 
     def test_create_record_workflow_step(self, httpx_mock: HTTPXMock, configure_client):
         """Test creating a workflow step."""
@@ -393,11 +413,16 @@ class TestRecordWorkflowStepComments:
         self, httpx_mock: HTTPXMock, configure_client
     ):
         """Test listing workflow step comments."""
+        import re
+
         url = "https://api.plce.opengov.com/plce/v2/testcommunity/records/123/workflow-steps/step-1/comments"
-        httpx_mock.add_response(url=url, json={"data": []})
+        httpx_mock.add_response(
+            url=re.compile(re.escape(url) + r"(\?.*)?$"),
+            json={"data": [], "meta": {}, "links": {}},
+        )
 
         result = opengov_api.list_record_workflow_step_comments("123", "step-1")
-        assert "data" in result
+        assert result.data == []
 
     def test_create_record_workflow_step_comment(
         self, httpx_mock: HTTPXMock, configure_client
@@ -443,13 +468,18 @@ class TestRecordCollections:
 
     def test_list_record_collections(self, httpx_mock: HTTPXMock, configure_client):
         """Test listing record collections."""
+        import re
+
         url = (
             "https://api.plce.opengov.com/plce/v2/testcommunity/records/123/collections"
         )
-        httpx_mock.add_response(url=url, json={"data": []})
+        httpx_mock.add_response(
+            url=re.compile(re.escape(url) + r"(\?.*)?$"),
+            json={"data": [], "meta": {}, "links": {}},
+        )
 
         result = opengov_api.list_record_collections("123")
-        assert "data" in result
+        assert result.data == []
 
     def test_get_record_collection(self, httpx_mock: HTTPXMock, configure_client):
         """Test getting a specific collection."""
