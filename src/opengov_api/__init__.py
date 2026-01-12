@@ -26,8 +26,12 @@ from .client import (
 # Models
 from .models import (
     DateRangeFilter,
+    DocumentStepResource,
+    DocumentStepStatus,
+    DocumentType,
     JSONAPIResponse,
     Links,
+    ListDocumentStepsParams,
     Meta,
     RecordAttributes,
     RecordCreateRequest,
@@ -107,6 +111,7 @@ from .approvals import (
 )
 from .documents import (
     list_document_steps,
+    iter_document_steps,
     get_document_step,
 )
 from .inspections import (
@@ -154,8 +159,12 @@ __all__ = [
     "get_timeout",
     # Models
     "DateRangeFilter",
+    "DocumentStepResource",
+    "DocumentStepStatus",
+    "DocumentType",
     "JSONAPIResponse",
     "Links",
+    "ListDocumentStepsParams",
     "Meta",
     "RecordAttributes",
     "RecordCreateRequest",
@@ -233,6 +242,7 @@ __all__ = [
     "update_approval_step",
     # Document Steps
     "list_document_steps",
+    "iter_document_steps",
     "get_document_step",
     # Inspection Steps
     "list_inspection_steps",

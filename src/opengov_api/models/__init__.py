@@ -8,10 +8,18 @@ from .base import (
     RelationshipData,
     ResourceObject,
 )
-from .enums import RecordStatus, StepKind, WorkflowStepStatus
+from .documents import DocumentStepAttributes, DocumentStepResource
+from .enums import (
+    DocumentStepStatus,
+    DocumentType,
+    RecordStatus,
+    StepKind,
+    WorkflowStepStatus,
+)
 from .params import (
     BaseListParams,
     DateRangeFilter,
+    ListDocumentStepsParams,
     ListRecordAdditionalLocationsParams,
     ListRecordAttachmentsParams,
     ListRecordCollectionsParams,
@@ -53,12 +61,15 @@ __all__ = [
     "RelationshipData",
     "ResourceObject",
     # Enums
+    "DocumentStepStatus",
+    "DocumentType",
     "RecordStatus",
     "StepKind",
     "WorkflowStepStatus",
     # Params
     "BaseListParams",
     "DateRangeFilter",
+    "ListDocumentStepsParams",
     "ListRecordsParams",
     "ListRecordGuestsParams",
     "ListRecordAdditionalLocationsParams",
@@ -67,6 +78,9 @@ __all__ = [
     "ListRecordWorkflowStepCommentsParams",
     "ListRecordCollectionsParams",
     "PageParams",
+    # Documents
+    "DocumentStepAttributes",
+    "DocumentStepResource",
     # Records
     "RecordAttributes",
     "RecordCreateAttributes",
