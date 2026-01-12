@@ -70,13 +70,27 @@ class TestListEndpoints:
         self, endpoint_func, url, response_key, httpx_mock: HTTPXMock, configure_client
     ):
         """All list endpoints return collections successfully."""
-        mock_items = [{"id": "1", "name": "Item 1"}, {"id": "2", "name": "Item 2"}]
-        httpx_mock.add_response(url=url, json={response_key: mock_items})
+        mock_items = [{"id": "1", "type": response_key.rstrip("s"), "attributes": {"name": "Item 1"}}, {"id": "2", "type": response_key.rstrip("s"), "attributes": {"name": "Item 2"}}]
+        response_json = {"data": mock_items, "meta": {"page": 1, "size": 20}, "links": {"self": url}}
+
+        # Match URL with any query params using regex
+        import re
+        httpx_mock.add_response(
+            url=re.compile(re.escape(url) + r"(\?.*)?$"),
+            json=response_json
+        )
 
         result = endpoint_func()
-        assert response_key in result
-        assert len(result[response_key]) == 2
-        assert result[response_key][0]["id"] == "1"
+        # list_records returns typed JSONAPIResponse, others return dict
+        if hasattr(result, "data") and hasattr(result, "meta") and hasattr(result, "links") and not isinstance(result, dict):
+            # Typed Pydantic response
+            assert len(result.data) == 2
+            assert result.data[0].id == "1"
+        else:
+            # Dict response - JSON:API format
+            assert "data" in result
+            assert len(result["data"]) == 2
+            assert result["data"][0]["id"] == "1"
 
     @pytest.mark.parametrize(
         "endpoint_func,url,response_key",
@@ -127,10 +141,21 @@ class TestListEndpoints:
         self, endpoint_func, url, response_key, httpx_mock: HTTPXMock, configure_client
     ):
         """All list endpoints handle empty results."""
-        httpx_mock.add_response(url=url, json={response_key: []})
+        import re
+        httpx_mock.add_response(
+            url=re.compile(re.escape(url) + r"(\?.*)?$"),
+            json={"data": [], "meta": {}, "links": {}}
+        )
 
         result = endpoint_func()
-        assert result == {response_key: []}
+        # list_records returns typed JSONAPIResponse, others return dict
+        if hasattr(result, "data") and hasattr(result, "meta") and hasattr(result, "links") and not isinstance(result, dict):
+            # Typed Pydantic response
+            assert len(result.data) == 0
+        else:
+            # Dict response - JSON:API format
+            assert "data" in result
+            assert len(result["data"]) == 0
 
     @pytest.mark.parametrize(
         "endpoint_func,url,status_code,exception_class",
@@ -186,8 +211,11 @@ class TestListEndpoints:
         configure_client,
     ):
         """All list endpoints handle HTTP errors consistently."""
+        import re
         httpx_mock.add_response(
-            url=url, status_code=status_code, json={"message": "Error message"}
+            url=re.compile(re.escape(url) + r"(\?.*)?$"),
+            status_code=status_code,
+            json={"message": "Error message"}
         )
 
         with pytest.raises(exception_class) as exc_info:

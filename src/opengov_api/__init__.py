@@ -23,9 +23,25 @@ from .client import (
     get_timeout,
 )
 
+# Models
+from .models import (
+    DateRangeFilter,
+    JSONAPIResponse,
+    Links,
+    Meta,
+    RecordAttributes,
+    RecordCreateRequest,
+    RecordResource,
+    RecordStatus,
+    RecordUpdateRequest,
+    StepKind,
+    WorkflowStepStatus,
+)
+
 # Endpoint functions
 from .records import (
     list_records,
+    iter_records,
     get_record,
     create_record,
     update_record,
@@ -130,8 +146,21 @@ __all__ = [
     "get_base_url",
     "get_community",
     "get_timeout",
+    # Models
+    "DateRangeFilter",
+    "JSONAPIResponse",
+    "Links",
+    "Meta",
+    "RecordAttributes",
+    "RecordCreateRequest",
+    "RecordResource",
+    "RecordStatus",
+    "RecordUpdateRequest",
+    "StepKind",
+    "WorkflowStepStatus",
     # Records
     "list_records",
+    "iter_records",
     "get_record",
     "create_record",
     "update_record",

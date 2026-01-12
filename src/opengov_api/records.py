@@ -50,40 +50,257 @@ opengov_api.create_record_workflow_step_comment(
 ```
 """
 
-from typing import Any
-
+from datetime import date, datetime
+from typing import Any, Iterator
 
 from .base import build_url, handle_request_errors, parse_json_response
 from .client import _get_client, get_base_url, get_community
+from .models import (
+    DateRangeFilter,
+    JSONAPIResponse,
+    Links,
+    ListRecordsParams,
+    Meta,
+    RecordResource,
+    RecordStatus,
+)
 
 
 @handle_request_errors
-def list_records() -> dict[str, Any]:
+def list_records(
+    *,
+    number: str | None = None,
+    hist_id: str | None = None,
+    hist_number: str | None = None,
+    type_id: str | None = None,
+    project_id: str | None = None,
+    status: RecordStatus | None = None,
+    created_at: date | datetime | DateRangeFilter | None = None,
+    updated_at: date | datetime | DateRangeFilter | None = None,
+    submitted_at: date | datetime | DateRangeFilter | None = None,
+    expires_at: date | datetime | DateRangeFilter | None = None,
+    is_enabled: bool | None = None,
+    renewal_submitted: bool | None = None,
+    submitted_online: bool | None = None,
+    renewal_number: str | None = None,
+    renewal_of_record_id: str | None = None,
+    page_number: int = 1,
+    page_size: int = 20,
+    include: list[str] | None = None,
+    fields: dict[str, list[str]] | None = None,
+    sort: str | None = None,
+) -> JSONAPIResponse[RecordResource]:
     """
-    List all records for the configured community.
+    List records for the configured community with pagination.
+
+    Args:
+        number: Filter by record number
+        hist_id: Filter by historical ID
+        hist_number: Filter by historical permit number
+        type_id: Filter by record type ID
+        project_id: Filter by project ID
+        status: Filter by status
+        created_at: Filter by creation date (date or DateRangeFilter)
+        updated_at: Filter by last updated date (date or DateRangeFilter)
+        submitted_at: Filter by submission date (date or DateRangeFilter)
+        expires_at: Filter by expiration date (date or DateRangeFilter)
+        is_enabled: Filter by enabled status
+        renewal_submitted: Filter by renewal submission status
+        submitted_online: Filter by online submission status
+        renewal_number: Filter by renewal number
+        renewal_of_record_id: Filter by renewal of record ID
+        page_number: Page number (1-based, default 1)
+        page_size: Number of records per page (1-100, default 20)
+        include: List of related resources to include
+        fields: Sparse fieldsets dict (e.g., {"records": ["name", "status"]})
+        sort: Sort order (e.g., "name", "-createdAt")
 
     Returns:
-        Dictionary containing records data from the API
+        JSONAPIResponse containing RecordResource objects with pagination info
 
     Raises:
         OpenGovConfigurationError: If API key or community is not configured
         OpenGovAPIConnectionError: If connection fails
         OpenGovAPITimeoutError: If request times out
         OpenGovAPIStatusError: If API returns an error status code
-        OpenGovResponseParseError: If response cannot be parsed as JSON
+        OpenGovResponseParseError: If response cannot be parsed
 
     Example:
         >>> import opengov_api
+        >>> from opengov_api.models import RecordStatus, DateRangeFilter
+        >>> from datetime import date
+        >>>
         >>> opengov_api.set_api_key("your-api-key")
         >>> opengov_api.set_community("your-community")
-        >>> records = opengov_api.list_records()
-        >>> print(records)
+        >>>
+        >>> # Simple filter
+        >>> response = opengov_api.list_records(
+        ...     status=RecordStatus.ACTIVE,
+        ...     is_enabled=True
+        ... )
+        >>>
+        >>> # Access records
+        >>> for record in response.data:
+        ...     print(f"{record.attributes.name}: {record.attributes.status}")
+        >>>
+        >>> # Check pagination
+        >>> print(f"Page {response.current_page()} of {response.total_pages()}")
+        >>> print(f"Total records: {response.total_records()}")
+        >>>
+        >>> # Date range filter
+        >>> response = opengov_api.list_records(
+        ...     created_at=DateRangeFilter(gt=date(2025, 3, 1)),
+        ...     page_size=50
+        ... )
+        >>>
+        >>> # Fetch next page
+        >>> if response.has_next_page():
+        ...     next_page = opengov_api.list_records(
+        ...         status=RecordStatus.ACTIVE,
+        ...         page_number=response.current_page() + 1
+        ...     )
     """
+    # Build params using ListRecordsParams model
+    params_model = ListRecordsParams(
+        filter_number=number,
+        filter_hist_id=hist_id,
+        filter_hist_number=hist_number,
+        filter_type_id=type_id,
+        filter_project_id=project_id,
+        filter_status=status,
+        filter_created_at=created_at,
+        filter_updated_at=updated_at,
+        filter_submitted_at=submitted_at,
+        filter_expires_at=expires_at,
+        filter_is_enabled=is_enabled,
+        filter_renewal_submitted=renewal_submitted,
+        filter_submitted_online=submitted_online,
+        filter_renewal_number=renewal_number,
+        filter_renewal_of_record_id=renewal_of_record_id,
+        page_number=page_number,
+        page_size=page_size,
+        include=include,
+        fields=fields,
+        sort=sort,
+    )
+
     with _get_client() as client:
         url = build_url(get_base_url(), get_community(), "records")
-        response = client.get(url)
+        response = client.get(url, params=params_model.to_query_params())
         response.raise_for_status()
-        return parse_json_response(response)
+        data = parse_json_response(response)
+
+        # Parse into typed response
+        return JSONAPIResponse[RecordResource](
+            data=[RecordResource(**item) for item in data["data"]],
+            included=data.get("included"),
+            links=Links(**data["links"]) if data.get("links") else None,
+            meta=Meta(**data["meta"]) if data.get("meta") else None,
+        )
+
+
+@handle_request_errors
+def iter_records(
+    *,
+    number: str | None = None,
+    hist_id: str | None = None,
+    hist_number: str | None = None,
+    type_id: str | None = None,
+    project_id: str | None = None,
+    status: RecordStatus | None = None,
+    created_at: date | datetime | DateRangeFilter | None = None,
+    updated_at: date | datetime | DateRangeFilter | None = None,
+    submitted_at: date | datetime | DateRangeFilter | None = None,
+    expires_at: date | datetime | DateRangeFilter | None = None,
+    is_enabled: bool | None = None,
+    renewal_submitted: bool | None = None,
+    submitted_online: bool | None = None,
+    renewal_number: str | None = None,
+    renewal_of_record_id: str | None = None,
+    page_size: int = 100,
+    include: list[str] | None = None,
+    fields: dict[str, list[str]] | None = None,
+    sort: str | None = None,
+) -> Iterator[RecordResource]:
+    """
+    Iterate through all records automatically handling pagination.
+
+    This generator function fetches all pages automatically, yielding
+    individual records one at a time. Use this when you want to process
+    all matching records without manually handling pagination.
+
+    Args:
+        Same as list_records, but page_number is managed automatically
+        and page_size defaults to 100 for efficiency
+
+    Yields:
+        RecordResource objects one at a time across all pages
+
+    Raises:
+        OpenGovConfigurationError: If API key or community is not configured
+        OpenGovAPIConnectionError: If connection fails
+        OpenGovAPITimeoutError: If request times out
+        OpenGovAPIStatusError: If API returns an error status code
+        OpenGovResponseParseError: If response cannot be parsed
+
+    Example:
+        >>> import opengov_api
+        >>> from opengov_api.models import RecordStatus
+        >>>
+        >>> opengov_api.set_api_key("your-api-key")
+        >>> opengov_api.set_community("your-community")
+        >>>
+        >>> # Iterate through all active records across all pages
+        >>> for record in opengov_api.iter_records(status=RecordStatus.ACTIVE):
+        ...     print(f"{record.attributes.name}: {record.attributes.number}")
+        >>>
+        >>> # With date range filter
+        >>> from datetime import date
+        >>> from opengov_api.models import DateRangeFilter
+        >>>
+        >>> for record in opengov_api.iter_records(
+        ...     created_at=DateRangeFilter(gt=date(2025, 1, 1)),
+        ...     is_enabled=True
+        ... ):
+        ...     process_record(record)
+    """
+    page = 1
+    while True:
+        response = list_records(
+            number=number,
+            hist_id=hist_id,
+            hist_number=hist_number,
+            type_id=type_id,
+            project_id=project_id,
+            status=status,
+            created_at=created_at,
+            updated_at=updated_at,
+            submitted_at=submitted_at,
+            expires_at=expires_at,
+            is_enabled=is_enabled,
+            renewal_submitted=renewal_submitted,
+            submitted_online=submitted_online,
+            renewal_number=renewal_number,
+            renewal_of_record_id=renewal_of_record_id,
+            page_number=page,
+            page_size=page_size,
+            include=include,
+            fields=fields,
+            sort=sort,
+        )
+
+        # Yield all records from this page
+        if isinstance(response.data, list):
+            for record in response.data:
+                yield record
+        else:
+            yield response.data
+
+        # Check if there's a next page
+        if not response.has_next_page():
+            break
+
+        page += 1
 
 
 @handle_request_errors

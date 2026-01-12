@@ -8,6 +8,7 @@ Provides:
 - Request execution wrapper
 """
 
+import functools
 import json
 from typing import Any, Callable
 
@@ -129,6 +130,7 @@ def handle_request_errors(
         Wrapped function with error handling
     """
 
+    @functools.wraps(func)
     def wrapper(*args: Any, **kwargs: Any) -> Any:
         try:
             return func(*args, **kwargs)

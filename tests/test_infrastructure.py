@@ -6,6 +6,7 @@ correctly across ALL endpoints. By using parametrized tests, we test each
 behavior once but verify it works for all endpoints, eliminating duplication.
 """
 
+import httpx
 import pytest
 from pytest_httpx import HTTPXMock
 
@@ -100,7 +101,12 @@ class TestInfrastructure:
         self, endpoint_func, url_pattern, httpx_mock: HTTPXMock, configure_client
     ):
         """All endpoints send correct Authorization header."""
-        httpx_mock.add_response(url=url_pattern, json={})
+        # Match URL with any query params using regex
+        import re
+        httpx_mock.add_response(
+            url=re.compile(re.escape(url_pattern) + r"(\?.*)?$"),
+            json={"data": [], "meta": {}, "links": {}}
+        )
         endpoint_func()
         request = httpx_mock.get_request()
         assert request is not None
@@ -147,7 +153,11 @@ class TestInfrastructure:
         self, endpoint_func, url_pattern, httpx_mock: HTTPXMock, configure_client
     ):
         """All endpoints handle non-JSON responses correctly."""
-        httpx_mock.add_response(url=url_pattern, text="not valid json")
+        import re
+        httpx_mock.add_response(
+            url=re.compile(re.escape(url_pattern) + r"(\?.*)?$"),
+            text="not valid json"
+        )
         with pytest.raises(OpenGovResponseParseError) as exc_info:
             endpoint_func()
         assert "Failed to parse JSON" in str(exc_info.value)
@@ -188,9 +198,13 @@ class TestInfrastructure:
     ):
         """All endpoints respect custom base URL configuration."""
         opengov_api.set_base_url("https://custom.api.com/v3")
-        httpx_mock.add_response(url=custom_url, json={})
+        import re
+        httpx_mock.add_response(
+            url=re.compile(re.escape(custom_url) + r"(\?.*)?$"),
+            json={"data": [], "meta": {}, "links": {}}
+        )
         result = endpoint_func()
-        assert result == {}  # Should not raise, returns empty dict
+        assert result is not None  # Should not raise, returns response object
 
 
 class TestGetEndpointInfrastructure:
