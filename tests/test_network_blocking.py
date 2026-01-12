@@ -32,7 +32,9 @@ class TestNetworkBlocking:
         # The presence of the autouse fixture means httpx_mock is always active
         pass
 
-    def test_network_calls_blocked_without_explicit_mock_usage(self, httpx_mock: HTTPXMock):
+    def test_network_calls_blocked_without_explicit_mock_usage(
+        self, httpx_mock: HTTPXMock
+    ):
         """
         Test that network calls are blocked when no mock is set up.
 
@@ -49,13 +51,15 @@ class TestNetworkBlocking:
 
         # Verify it's a timeout/no response error from pytest-httpx, not a real network error
         error_msg = str(exc_info.value).lower()
-        assert (
-            "no response" in error_msg or "timeout" in error_msg
-        ), f"Expected mock error, got: {exc_info.value}"
+        assert "no response" in error_msg or "timeout" in error_msg, (
+            f"Expected mock error, got: {exc_info.value}"
+        )
 
         # Verify no requests were matched (which is what we want - to catch unmocked requests)
-        assert len(httpx_mock._requests_not_matched) == 1, "Should have caught one unmocked request"
-        
+        assert len(httpx_mock._requests_not_matched) == 1, (
+            "Should have caught one unmocked request"
+        )
+
         # Clear the unmocked requests so teardown doesn't fail
         httpx_mock._requests_not_matched.clear()
 
