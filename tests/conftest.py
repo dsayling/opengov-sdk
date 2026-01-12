@@ -34,8 +34,77 @@ def block_network_calls(httpx_mock: HTTPXMock):
     pass
 
 
+@pytest.fixture
+def test_base_url():
+    """
+    Provide the base URL used in tests.
+
+    Using example.com makes it clear these are test URLs
+    and not real API endpoints.
+    """
+    return "https://api.example.com/v2"
+
+
+@pytest.fixture
+def build_url(test_base_url):
+    """
+    Build a test URL from a path.
+
+    Example:
+        build_url("/testcommunity/records")
+        -> "https://api.example.com/v2/testcommunity/records"
+    """
+
+    def _build(path: str) -> str:
+        # Remove leading slash if present to avoid double slashes
+        path = path.lstrip("/")
+        return f"{test_base_url}/{path}"
+
+    return _build
+
+
+@pytest.fixture
+def mock_url_with_params():
+    """
+    Create a regex pattern that matches a URL with any query parameters.
+
+    This is useful for mocking endpoints that accept pagination or other query params.
+
+    Example:
+        pattern = mock_url_with_params(build_url("testcommunity/records"))
+        httpx_mock.add_response(url=pattern, json={"data": []})
+        # Matches both /records and /records?page[number]=1&page[size]=20
+    """
+    import re
+
+    def _pattern(url: str):
+        return re.compile(re.escape(url) + r"(\?.*)?$")
+
+    return _pattern
+
+
+@pytest.fixture
+def assert_request_method(httpx_mock: HTTPXMock):
+    """
+    Assert that the most recent request used the expected HTTP method.
+
+    Example:
+        assert_request_method("POST")
+        assert_request_method("PATCH")
+    """
+
+    def _assert(expected_method: str):
+        request = httpx_mock.get_request()
+        assert request is not None, "No request was made"
+        assert request.method == expected_method, (
+            f"Expected {expected_method}, got {request.method}"
+        )
+
+    return _assert
+
+
 @pytest.fixture(autouse=True)
-def reset_config():
+def reset_config(test_base_url):
     """
     Reset module-level configuration before each test.
 
@@ -52,7 +121,7 @@ def reset_config():
 
     # Reset to None/defaults
     client._api_key = None
-    client._base_url = "https://api.plce.opengov.com/plce/v2"
+    client._base_url = test_base_url
     client._community = None
     client._timeout = 30.0
 
