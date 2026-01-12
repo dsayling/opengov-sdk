@@ -73,7 +73,9 @@ class DateRangeFilter(BaseModel):
         return cls(lt=threshold)
 
     @classmethod
-    def between_days(cls, start_days_ago: int, end_days_ago: int = 0) -> "DateRangeFilter":
+    def between_days(
+        cls, start_days_ago: int, end_days_ago: int = 0
+    ) -> "DateRangeFilter":
         """
         Create a filter for records between N days ago and M days ago.
 

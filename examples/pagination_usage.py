@@ -16,9 +16,7 @@ opengov_api.set_community("your-community")
 print("Example 1: List active records")
 print("=" * 50)
 response = opengov_api.list_records(
-    filter_status=RecordStatus.ACTIVE,
-    filter_is_enabled=True,
-    page_size=10
+    filter_status=RecordStatus.ACTIVE, filter_is_enabled=True, page_size=10
 )
 
 print(f"Page {response.current_page()} of {response.total_pages()}")
@@ -33,7 +31,7 @@ print("\nExample 2: Records created after March 1, 2025")
 print("=" * 50)
 response = opengov_api.list_records(
     filter_created_at=DateRangeFilter(gt=date(2025, 3, 1)),
-    filter_status=RecordStatus.ACTIVE
+    filter_status=RecordStatus.ACTIVE,
 )
 
 for record in response.data:
@@ -43,10 +41,7 @@ for record in response.data:
 print("\nExample 3: Records from Q1 2025")
 print("=" * 50)
 response = opengov_api.list_records(
-    filter_created_at=DateRangeFilter(
-        gte=date(2025, 1, 1),
-        lt=date(2025, 4, 1)
-    )
+    filter_created_at=DateRangeFilter(gte=date(2025, 1, 1), lt=date(2025, 4, 1))
 )
 
 print(f"Found {response.total_records()} records in Q1 2025")
@@ -55,9 +50,7 @@ print(f"Found {response.total_records()} records in Q1 2025")
 print("\nExample 4: Manual pagination")
 print("=" * 50)
 response = opengov_api.list_records(
-    filter_status=RecordStatus.ACTIVE,
-    page_number=1,
-    page_size=20
+    filter_status=RecordStatus.ACTIVE, page_number=1, page_size=20
 )
 
 print(f"First page: {len(response.data)} records")
@@ -66,7 +59,7 @@ if response.has_next_page():
     next_response = opengov_api.list_records(
         filter_status=RecordStatus.ACTIVE,
         page_number=response.current_page() + 1,
-        page_size=20
+        page_size=20,
     )
     print(f"Second page: {len(next_response.data)} records")
 
@@ -75,8 +68,7 @@ print("\nExample 5: Auto-pagination with iterator")
 print("=" * 50)
 count = 0
 for record in opengov_api.iter_records(
-    filter_status=RecordStatus.ACTIVE,
-    filter_is_enabled=True
+    filter_status=RecordStatus.ACTIVE, filter_is_enabled=True
 ):
     count += 1
     print(f"  Processing record {count}: {record.attributes.name}")
@@ -93,7 +85,7 @@ response = opengov_api.list_records(
     filter_submitted_online=True,
     filter_created_at=DateRangeFilter(gte=date(2025, 1, 1)),
     sort="-createdAt",  # Sort by creation date descending
-    page_size=50
+    page_size=50,
 )
 
 print(f"Found {response.total_records()} completed online building permits since 2025")
@@ -105,7 +97,7 @@ response = opengov_api.list_records(
     filter_status=RecordStatus.ACTIVE,
     include=["applicant", "primaryLocation"],
     fields={"records": ["name", "number", "status"]},
-    page_size=10
+    page_size=10,
 )
 
 for record in response.data:

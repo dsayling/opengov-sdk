@@ -6,7 +6,6 @@ correctly across ALL endpoints. By using parametrized tests, we test each
 behavior once but verify it works for all endpoints, eliminating duplication.
 """
 
-import httpx
 import pytest
 from pytest_httpx import HTTPXMock
 
@@ -103,9 +102,10 @@ class TestInfrastructure:
         """All endpoints send correct Authorization header."""
         # Match URL with any query params using regex
         import re
+
         httpx_mock.add_response(
             url=re.compile(re.escape(url_pattern) + r"(\?.*)?$"),
-            json={"data": [], "meta": {}, "links": {}}
+            json={"data": [], "meta": {}, "links": {}},
         )
         endpoint_func()
         request = httpx_mock.get_request()
@@ -154,9 +154,9 @@ class TestInfrastructure:
     ):
         """All endpoints handle non-JSON responses correctly."""
         import re
+
         httpx_mock.add_response(
-            url=re.compile(re.escape(url_pattern) + r"(\?.*)?$"),
-            text="not valid json"
+            url=re.compile(re.escape(url_pattern) + r"(\?.*)?$"), text="not valid json"
         )
         with pytest.raises(OpenGovResponseParseError) as exc_info:
             endpoint_func()
@@ -199,9 +199,10 @@ class TestInfrastructure:
         """All endpoints respect custom base URL configuration."""
         opengov_api.set_base_url("https://custom.api.com/v3")
         import re
+
         httpx_mock.add_response(
             url=re.compile(re.escape(custom_url) + r"(\?.*)?$"),
-            json={"data": [], "meta": {}, "links": {}}
+            json={"data": [], "meta": {}, "links": {}},
         )
         result = endpoint_func()
         assert result is not None  # Should not raise, returns response object
