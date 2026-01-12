@@ -248,3 +248,54 @@ class ListRecordsParams(BaseModel):
             params["sort"] = self.sort
 
         return params
+
+
+class BaseListParams(BaseModel):
+    """
+    Base parameters for nested resource list endpoints.
+
+    Most nested endpoints support pagination and JSON:API standard params
+    but don't have complex filtering like the main records list.
+    """
+
+    # Pagination
+    page_number: int = Field(1, ge=1)
+    page_size: int = Field(20, ge=1, le=100)
+
+    # JSON:API standard params
+    include: list[str] | None = None
+    fields: dict[str, list[str]] | None = None
+    sort: str | None = None
+
+    def to_query_params(self) -> dict[str, Any]:
+        """
+        Convert to query parameter dict with proper JSON:API bracket notation.
+
+        Returns:
+            Dictionary suitable for httpx params argument
+        """
+        params: dict[str, Any] = {}
+
+        # Pagination
+        params["page[number]"] = self.page_number
+        params["page[size]"] = self.page_size
+
+        # JSON:API standard params
+        if self.include:
+            params["include"] = ",".join(self.include)
+        if self.fields:
+            for resource_type, field_list in self.fields.items():
+                params[f"fields[{resource_type}]"] = ",".join(field_list)
+        if self.sort:
+            params["sort"] = self.sort
+
+        return params
+
+
+# Nested resource params - inherit from BaseListParams
+ListRecordGuestsParams = BaseListParams
+ListRecordAdditionalLocationsParams = BaseListParams
+ListRecordAttachmentsParams = BaseListParams
+ListRecordWorkflowStepsParams = BaseListParams
+ListRecordWorkflowStepCommentsParams = BaseListParams
+ListRecordCollectionsParams = BaseListParams

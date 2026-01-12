@@ -9,8 +9,27 @@ from .base import (
     ResourceObject,
 )
 from .enums import RecordStatus, StepKind, WorkflowStepStatus
-from .params import DateRangeFilter, ListRecordsParams, PageParams
+from .params import (
+    BaseListParams,
+    DateRangeFilter,
+    ListRecordAdditionalLocationsParams,
+    ListRecordAttachmentsParams,
+    ListRecordCollectionsParams,
+    ListRecordGuestsParams,
+    ListRecordsParams,
+    ListRecordWorkflowStepCommentsParams,
+    ListRecordWorkflowStepsParams,
+    PageParams,
+)
 from .records import (
+    AttachmentAttributes,
+    AttachmentResource,
+    CollectionAttributes,
+    CollectionResource,
+    GuestAttributes,
+    GuestResource,
+    LocationAttributes,
+    LocationResource,
     RecordAttributes,
     RecordCreateAttributes,
     RecordCreateData,
@@ -19,6 +38,10 @@ from .records import (
     RecordUpdateAttributes,
     RecordUpdateData,
     RecordUpdateRequest,
+    WorkflowStepAttributes,
+    WorkflowStepCommentAttributes,
+    WorkflowStepCommentResource,
+    WorkflowStepResource,
 )
 
 __all__ = [
@@ -34,8 +57,15 @@ __all__ = [
     "StepKind",
     "WorkflowStepStatus",
     # Params
+    "BaseListParams",
     "DateRangeFilter",
     "ListRecordsParams",
+    "ListRecordGuestsParams",
+    "ListRecordAdditionalLocationsParams",
+    "ListRecordAttachmentsParams",
+    "ListRecordWorkflowStepsParams",
+    "ListRecordWorkflowStepCommentsParams",
+    "ListRecordCollectionsParams",
     "PageParams",
     # Records
     "RecordAttributes",
@@ -46,4 +76,17 @@ __all__ = [
     "RecordUpdateAttributes",
     "RecordUpdateData",
     "RecordUpdateRequest",
+    # Nested resources
+    "GuestAttributes",
+    "GuestResource",
+    "LocationAttributes",
+    "LocationResource",
+    "AttachmentAttributes",
+    "AttachmentResource",
+    "WorkflowStepAttributes",
+    "WorkflowStepResource",
+    "WorkflowStepCommentAttributes",
+    "WorkflowStepCommentResource",
+    "CollectionAttributes",
+    "CollectionResource",
 ]
