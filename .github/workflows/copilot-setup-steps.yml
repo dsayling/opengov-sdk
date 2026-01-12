@@ -23,8 +23,10 @@ jobs:
       with:
         enable-cache: true
         
-    - name: Install dependencies
-      run: uv sync
+    - name: Setup
+      run: |
+        uv sync
+        uvx prek install
       
     - name: Verify installation
       run: |
