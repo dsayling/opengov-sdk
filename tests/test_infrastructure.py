@@ -60,49 +60,55 @@ class TestInfrastructure:
         assert "Community not set" in str(exc_info.value)
 
     @pytest.mark.parametrize(
-        "endpoint_func,url_pattern",
+        "endpoint_func,url_path",
         [
             (
                 opengov_api.list_records,
-                "https://api.plce.opengov.com/plce/v2/testcommunity/records",
+                "testcommunity/records",
             ),
             (
                 opengov_api.list_users,
-                "https://api.plce.opengov.com/plce/v2/testcommunity/users",
+                "testcommunity/users",
             ),
             (
                 opengov_api.list_locations,
-                "https://api.plce.opengov.com/plce/v2/testcommunity/locations",
+                "testcommunity/locations",
             ),
             (
                 opengov_api.list_approval_steps,
-                "https://api.plce.opengov.com/plce/v2/testcommunity/approval-steps",
+                "testcommunity/approval-steps",
             ),
             (
                 opengov_api.list_document_steps,
-                "https://api.plce.opengov.com/plce/v2/testcommunity/document-steps",
+                "testcommunity/document-steps",
             ),
             (
                 opengov_api.list_inspection_steps,
-                "https://api.plce.opengov.com/plce/v2/testcommunity/inspection-steps",
+                "testcommunity/inspection-steps",
             ),
             (
                 opengov_api.list_files,
-                "https://api.plce.opengov.com/plce/v2/testcommunity/files",
+                "testcommunity/files",
             ),
             (
                 opengov_api.list_projects,
-                "https://api.plce.opengov.com/plce/v2/testcommunity/projects",
+                "testcommunity/projects",
             ),
         ],
     )
     def test_sends_auth_header(
-        self, endpoint_func, url_pattern, httpx_mock: HTTPXMock, configure_client
+        self,
+        endpoint_func,
+        url_path,
+        httpx_mock: HTTPXMock,
+        configure_client,
+        build_url,
     ):
         """All endpoints send correct Authorization header."""
         # Match URL with any query params using regex
         import re
 
+        url_pattern = build_url(url_path)
         httpx_mock.add_response(
             url=re.compile(re.escape(url_pattern) + r"(\?.*)?$"),
             json={"data": [], "meta": {}, "links": {}},
@@ -113,48 +119,54 @@ class TestInfrastructure:
         assert request.headers["Authorization"] == "Token test-api-key"
 
     @pytest.mark.parametrize(
-        "endpoint_func,url_pattern",
+        "endpoint_func,url_path",
         [
             (
                 opengov_api.list_records,
-                "https://api.plce.opengov.com/plce/v2/testcommunity/records",
+                "testcommunity/records",
             ),
             (
                 opengov_api.list_users,
-                "https://api.plce.opengov.com/plce/v2/testcommunity/users",
+                "testcommunity/users",
             ),
             (
                 opengov_api.list_locations,
-                "https://api.plce.opengov.com/plce/v2/testcommunity/locations",
+                "testcommunity/locations",
             ),
             (
                 opengov_api.list_approval_steps,
-                "https://api.plce.opengov.com/plce/v2/testcommunity/approval-steps",
+                "testcommunity/approval-steps",
             ),
             (
                 opengov_api.list_document_steps,
-                "https://api.plce.opengov.com/plce/v2/testcommunity/document-steps",
+                "testcommunity/document-steps",
             ),
             (
                 opengov_api.list_inspection_steps,
-                "https://api.plce.opengov.com/plce/v2/testcommunity/inspection-steps",
+                "testcommunity/inspection-steps",
             ),
             (
                 opengov_api.list_files,
-                "https://api.plce.opengov.com/plce/v2/testcommunity/files",
+                "testcommunity/files",
             ),
             (
                 opengov_api.list_projects,
-                "https://api.plce.opengov.com/plce/v2/testcommunity/projects",
+                "testcommunity/projects",
             ),
         ],
     )
     def test_handles_invalid_json(
-        self, endpoint_func, url_pattern, httpx_mock: HTTPXMock, configure_client
+        self,
+        endpoint_func,
+        url_path,
+        httpx_mock: HTTPXMock,
+        configure_client,
+        build_url,
     ):
         """All endpoints handle non-JSON responses correctly."""
         import re
 
+        url_pattern = build_url(url_path)
         httpx_mock.add_response(
             url=re.compile(re.escape(url_pattern) + r"(\?.*)?$"), text="not valid json"
         )
@@ -262,69 +274,76 @@ class TestGetEndpointInfrastructure:
         assert "Community not set" in str(exc_info.value)
 
     @pytest.mark.parametrize(
-        "endpoint_func,resource_id,url",
+        "endpoint_func,resource_id,url_path",
         [
             (
                 opengov_api.get_record,
                 "12345",
-                "https://api.plce.opengov.com/plce/v2/testcommunity/records/12345",
+                "testcommunity/records/12345",
             ),
             (
                 opengov_api.get_user,
                 "12345",
-                "https://api.plce.opengov.com/plce/v2/testcommunity/users/12345",
+                "testcommunity/users/12345",
             ),
             (
                 opengov_api.list_user_flags,
                 "12345",
-                "https://api.plce.opengov.com/plce/v2/testcommunity/users/12345/flags",
+                "testcommunity/users/12345/flags",
             ),
             (
                 opengov_api.get_location,
                 "12345",
-                "https://api.plce.opengov.com/plce/v2/testcommunity/locations/12345",
+                "testcommunity/locations/12345",
             ),
             (
                 opengov_api.list_location_flags,
                 "12345",
-                "https://api.plce.opengov.com/plce/v2/testcommunity/locations/12345/flags",
+                "testcommunity/locations/12345/flags",
             ),
             (
                 opengov_api.get_approval_step,
                 "12345",
-                "https://api.plce.opengov.com/plce/v2/testcommunity/approval-steps/12345",
+                "testcommunity/approval-steps/12345",
             ),
             (
                 opengov_api.get_document_step,
                 "12345",
-                "https://api.plce.opengov.com/plce/v2/testcommunity/document-steps/12345",
+                "testcommunity/document-steps/12345",
             ),
             (
                 opengov_api.get_inspection_step,
                 "12345",
-                "https://api.plce.opengov.com/plce/v2/testcommunity/inspection-steps/12345",
+                "testcommunity/inspection-steps/12345",
             ),
             (
                 opengov_api.list_inspection_types,
                 "12345",
-                "https://api.plce.opengov.com/plce/v2/testcommunity/inspection-steps/12345/inspection-types",
+                "testcommunity/inspection-steps/12345/inspection-types",
             ),
             (
                 opengov_api.get_file,
                 "12345",
-                "https://api.plce.opengov.com/plce/v2/testcommunity/files/12345",
+                "testcommunity/files/12345",
             ),
             (
                 opengov_api.get_project,
                 "12345",
-                "https://api.plce.opengov.com/plce/v2/testcommunity/projects/12345",
+                "testcommunity/projects/12345",
             ),
         ],
     )
     def test_get_sends_auth_header(
-        self, endpoint_func, resource_id, url, httpx_mock: HTTPXMock, configure_client
+        self,
+        endpoint_func,
+        resource_id,
+        url_path,
+        httpx_mock: HTTPXMock,
+        configure_client,
+        build_url,
     ):
         """All get endpoints send correct Authorization header."""
+        url = build_url(url_path)
         httpx_mock.add_response(url=url, json={"id": resource_id})
         endpoint_func(resource_id)
         request = httpx_mock.get_request()

@@ -22,52 +22,59 @@ class TestListEndpoints:
     """Tests for common behaviors of all list-style endpoints."""
 
     @pytest.mark.parametrize(
-        "endpoint_func,url,response_key",
+        "endpoint_func,url_path,response_key",
         [
             (
                 opengov_api.list_records,
-                "https://api.plce.opengov.com/plce/v2/testcommunity/records",
+                "testcommunity/records",
                 "records",
             ),
             (
                 opengov_api.list_users,
-                "https://api.plce.opengov.com/plce/v2/testcommunity/users",
+                "testcommunity/users",
                 "users",
             ),
             (
                 opengov_api.list_locations,
-                "https://api.plce.opengov.com/plce/v2/testcommunity/locations",
+                "testcommunity/locations",
                 "locations",
             ),
             (
                 opengov_api.list_approval_steps,
-                "https://api.plce.opengov.com/plce/v2/testcommunity/approval-steps",
+                "testcommunity/approval-steps",
                 "approval-steps",
             ),
             (
                 opengov_api.list_document_steps,
-                "https://api.plce.opengov.com/plce/v2/testcommunity/document-steps",
+                "testcommunity/document-steps",
                 "document-steps",
             ),
             (
                 opengov_api.list_inspection_steps,
-                "https://api.plce.opengov.com/plce/v2/testcommunity/inspection-steps",
+                "testcommunity/inspection-steps",
                 "inspection-steps",
             ),
             (
                 opengov_api.list_files,
-                "https://api.plce.opengov.com/plce/v2/testcommunity/files",
+                "testcommunity/files",
                 "files",
             ),
             (
                 opengov_api.list_projects,
-                "https://api.plce.opengov.com/plce/v2/testcommunity/projects",
+                "testcommunity/projects",
                 "projects",
             ),
         ],
     )
     def test_list_success(
-        self, endpoint_func, url, response_key, httpx_mock: HTTPXMock, configure_client
+        self,
+        endpoint_func,
+        url_path,
+        response_key,
+        httpx_mock: HTTPXMock,
+        configure_client,
+        build_url,
+        mock_url_with_params,
     ):
         """All list endpoints return collections successfully."""
         mock_items = [
@@ -82,18 +89,14 @@ class TestListEndpoints:
                 "attributes": {"name": "Item 2"},
             },
         ]
+        url = build_url(url_path)
         response_json = {
             "data": mock_items,
             "meta": {"page": 1, "size": 20},
             "links": {"self": url},
         }
 
-        # Match URL with any query params using regex
-        import re
-
-        httpx_mock.add_response(
-            url=re.compile(re.escape(url) + r"(\?.*)?$"), json=response_json
-        )
+        httpx_mock.add_response(url=mock_url_with_params(url), json=response_json)
 
         result = endpoint_func()
         # list_records returns typed JSONAPIResponse, others return dict
@@ -113,56 +116,63 @@ class TestListEndpoints:
             assert result["data"][0]["id"] == "1"
 
     @pytest.mark.parametrize(
-        "endpoint_func,url,response_key",
+        "endpoint_func,url_path,response_key",
         [
             (
                 opengov_api.list_records,
-                "https://api.plce.opengov.com/plce/v2/testcommunity/records",
+                "testcommunity/records",
                 "records",
             ),
             (
                 opengov_api.list_users,
-                "https://api.plce.opengov.com/plce/v2/testcommunity/users",
+                "testcommunity/users",
                 "users",
             ),
             (
                 opengov_api.list_locations,
-                "https://api.plce.opengov.com/plce/v2/testcommunity/locations",
+                "testcommunity/locations",
                 "locations",
             ),
             (
                 opengov_api.list_approval_steps,
-                "https://api.plce.opengov.com/plce/v2/testcommunity/approval-steps",
+                "testcommunity/approval-steps",
                 "approval-steps",
             ),
             (
                 opengov_api.list_document_steps,
-                "https://api.plce.opengov.com/plce/v2/testcommunity/document-steps",
+                "testcommunity/document-steps",
                 "document-steps",
             ),
             (
                 opengov_api.list_inspection_steps,
-                "https://api.plce.opengov.com/plce/v2/testcommunity/inspection-steps",
+                "testcommunity/inspection-steps",
                 "inspection-steps",
             ),
             (
                 opengov_api.list_files,
-                "https://api.plce.opengov.com/plce/v2/testcommunity/files",
+                "testcommunity/files",
                 "files",
             ),
             (
                 opengov_api.list_projects,
-                "https://api.plce.opengov.com/plce/v2/testcommunity/projects",
+                "testcommunity/projects",
                 "projects",
             ),
         ],
     )
     def test_list_empty(
-        self, endpoint_func, url, response_key, httpx_mock: HTTPXMock, configure_client
+        self,
+        endpoint_func,
+        url_path,
+        response_key,
+        httpx_mock: HTTPXMock,
+        configure_client,
+        build_url,
     ):
         """All list endpoints handle empty results."""
         import re
 
+        url = build_url(url_path)
         httpx_mock.add_response(
             url=re.compile(re.escape(url) + r"(\?.*)?$"),
             json={"data": [], "meta": {}, "links": {}},
@@ -184,44 +194,44 @@ class TestListEndpoints:
             assert len(result["data"]) == 0
 
     @pytest.mark.parametrize(
-        "endpoint_func,url,status_code,exception_class",
+        "endpoint_func,url_path,status_code,exception_class",
         [
             # Test 401 for all list endpoints
             (
                 opengov_api.list_records,
-                "https://api.plce.opengov.com/plce/v2/testcommunity/records",
+                "testcommunity/records",
                 401,
                 OpenGovAuthenticationError,
             ),
             (
                 opengov_api.list_users,
-                "https://api.plce.opengov.com/plce/v2/testcommunity/users",
+                "testcommunity/users",
                 401,
                 OpenGovAuthenticationError,
             ),
             # Test 429 for all list endpoints
             (
                 opengov_api.list_records,
-                "https://api.plce.opengov.com/plce/v2/testcommunity/records",
+                "testcommunity/records",
                 429,
                 OpenGovRateLimitError,
             ),
             (
                 opengov_api.list_users,
-                "https://api.plce.opengov.com/plce/v2/testcommunity/users",
+                "testcommunity/users",
                 429,
                 OpenGovRateLimitError,
             ),
             # Test 500 for all list endpoints
             (
                 opengov_api.list_records,
-                "https://api.plce.opengov.com/plce/v2/testcommunity/records",
+                "testcommunity/records",
                 500,
                 OpenGovInternalServerError,
             ),
             (
                 opengov_api.list_users,
-                "https://api.plce.opengov.com/plce/v2/testcommunity/users",
+                "testcommunity/users",
                 500,
                 OpenGovInternalServerError,
             ),
@@ -230,15 +240,17 @@ class TestListEndpoints:
     def test_list_error_handling(
         self,
         endpoint_func,
-        url,
+        url_path,
         status_code,
         exception_class,
         httpx_mock: HTTPXMock,
         configure_client,
+        build_url,
     ):
         """All list endpoints handle HTTP errors consistently."""
         import re
 
+        url = build_url(url_path)
         httpx_mock.add_response(
             url=re.compile(re.escape(url) + r"(\?.*)?$"),
             status_code=status_code,
@@ -254,61 +266,61 @@ class TestGetEndpoints:
     """Tests for common behaviors of all get-by-id endpoints."""
 
     @pytest.mark.parametrize(
-        "endpoint_func,url_template,resource_id",
+        "endpoint_func,url_path_template,resource_id",
         [
             (
                 opengov_api.get_record,
-                "https://api.plce.opengov.com/plce/v2/testcommunity/records/{}",
+                "testcommunity/records/{}",
                 "12345",
             ),
             (
                 opengov_api.get_user,
-                "https://api.plce.opengov.com/plce/v2/testcommunity/users/{}",
+                "testcommunity/users/{}",
                 "12345",
             ),
             (
                 opengov_api.list_user_flags,
-                "https://api.plce.opengov.com/plce/v2/testcommunity/users/{}/flags",
+                "testcommunity/users/{}/flags",
                 "12345",
             ),
             (
                 opengov_api.get_location,
-                "https://api.plce.opengov.com/plce/v2/testcommunity/locations/{}",
+                "testcommunity/locations/{}",
                 "12345",
             ),
             (
                 opengov_api.list_location_flags,
-                "https://api.plce.opengov.com/plce/v2/testcommunity/locations/{}/flags",
+                "testcommunity/locations/{}/flags",
                 "12345",
             ),
             (
                 opengov_api.get_approval_step,
-                "https://api.plce.opengov.com/plce/v2/testcommunity/approval-steps/{}",
+                "testcommunity/approval-steps/{}",
                 "12345",
             ),
             (
                 opengov_api.get_document_step,
-                "https://api.plce.opengov.com/plce/v2/testcommunity/document-steps/{}",
+                "testcommunity/document-steps/{}",
                 "12345",
             ),
             (
                 opengov_api.get_inspection_step,
-                "https://api.plce.opengov.com/plce/v2/testcommunity/inspection-steps/{}",
+                "testcommunity/inspection-steps/{}",
                 "12345",
             ),
             (
                 opengov_api.list_inspection_types,
-                "https://api.plce.opengov.com/plce/v2/testcommunity/inspection-steps/{}/inspection-types",
+                "testcommunity/inspection-steps/{}/inspection-types",
                 "12345",
             ),
             (
                 opengov_api.get_file,
-                "https://api.plce.opengov.com/plce/v2/testcommunity/files/{}",
+                "testcommunity/files/{}",
                 "12345",
             ),
             (
                 opengov_api.get_project,
-                "https://api.plce.opengov.com/plce/v2/testcommunity/projects/{}",
+                "testcommunity/projects/{}",
                 "12345",
             ),
         ],
@@ -316,13 +328,14 @@ class TestGetEndpoints:
     def test_get_success(
         self,
         endpoint_func,
-        url_template,
+        url_path_template,
         resource_id,
         httpx_mock: HTTPXMock,
         configure_client,
+        build_url,
     ):
         """All get endpoints return single resources successfully."""
-        url = url_template.format(resource_id)
+        url = build_url(url_path_template.format(resource_id))
         mock_resource = {"id": resource_id, "name": "Test Resource"}
         httpx_mock.add_response(url=url, json=mock_resource)
 
@@ -331,61 +344,61 @@ class TestGetEndpoints:
         assert result["name"] == "Test Resource"
 
     @pytest.mark.parametrize(
-        "endpoint_func,url_template,resource_id",
+        "endpoint_func,url_path_template,resource_id",
         [
             (
                 opengov_api.get_record,
-                "https://api.plce.opengov.com/plce/v2/testcommunity/records/{}",
+                "testcommunity/records/{}",
                 "99999",
             ),
             (
                 opengov_api.get_user,
-                "https://api.plce.opengov.com/plce/v2/testcommunity/users/{}",
+                "testcommunity/users/{}",
                 "99999",
             ),
             (
                 opengov_api.list_user_flags,
-                "https://api.plce.opengov.com/plce/v2/testcommunity/users/{}/flags",
+                "testcommunity/users/{}/flags",
                 "99999",
             ),
             (
                 opengov_api.get_location,
-                "https://api.plce.opengov.com/plce/v2/testcommunity/locations/{}",
+                "testcommunity/locations/{}",
                 "99999",
             ),
             (
                 opengov_api.list_location_flags,
-                "https://api.plce.opengov.com/plce/v2/testcommunity/locations/{}/flags",
+                "testcommunity/locations/{}/flags",
                 "99999",
             ),
             (
                 opengov_api.get_approval_step,
-                "https://api.plce.opengov.com/plce/v2/testcommunity/approval-steps/{}",
+                "testcommunity/approval-steps/{}",
                 "99999",
             ),
             (
                 opengov_api.get_document_step,
-                "https://api.plce.opengov.com/plce/v2/testcommunity/document-steps/{}",
+                "testcommunity/document-steps/{}",
                 "99999",
             ),
             (
                 opengov_api.get_inspection_step,
-                "https://api.plce.opengov.com/plce/v2/testcommunity/inspection-steps/{}",
+                "testcommunity/inspection-steps/{}",
                 "99999",
             ),
             (
                 opengov_api.list_inspection_types,
-                "https://api.plce.opengov.com/plce/v2/testcommunity/inspection-steps/{}/inspection-types",
+                "testcommunity/inspection-steps/{}/inspection-types",
                 "99999",
             ),
             (
                 opengov_api.get_file,
-                "https://api.plce.opengov.com/plce/v2/testcommunity/files/{}",
+                "testcommunity/files/{}",
                 "99999",
             ),
             (
                 opengov_api.get_project,
-                "https://api.plce.opengov.com/plce/v2/testcommunity/projects/{}",
+                "testcommunity/projects/{}",
                 "99999",
             ),
         ],
@@ -393,13 +406,14 @@ class TestGetEndpoints:
     def test_get_not_found(
         self,
         endpoint_func,
-        url_template,
+        url_path_template,
         resource_id,
         httpx_mock: HTTPXMock,
         configure_client,
+        build_url,
     ):
         """All get endpoints handle 404 errors consistently."""
-        url = url_template.format(resource_id)
+        url = build_url(url_path_template.format(resource_id))
         httpx_mock.add_response(url=url, status_code=404, json={"message": "Not found"})
 
         with pytest.raises(OpenGovNotFoundError) as exc_info:
@@ -407,40 +421,40 @@ class TestGetEndpoints:
         assert exc_info.value.status_code == 404
 
     @pytest.mark.parametrize(
-        "endpoint_func,url_template,resource_id,status_code,exception_class",
+        "endpoint_func,url_path_template,resource_id,status_code,exception_class",
         [
             # Test various error codes for get endpoints
             (
                 opengov_api.get_record,
-                "https://api.plce.opengov.com/plce/v2/testcommunity/records/{}",
+                "testcommunity/records/{}",
                 "12345",
                 401,
                 OpenGovAuthenticationError,
             ),
             (
                 opengov_api.get_record,
-                "https://api.plce.opengov.com/plce/v2/testcommunity/records/{}",
+                "testcommunity/records/{}",
                 "12345",
                 429,
                 OpenGovRateLimitError,
             ),
             (
                 opengov_api.get_record,
-                "https://api.plce.opengov.com/plce/v2/testcommunity/records/{}",
+                "testcommunity/records/{}",
                 "12345",
                 500,
                 OpenGovInternalServerError,
             ),
             (
                 opengov_api.get_user,
-                "https://api.plce.opengov.com/plce/v2/testcommunity/users/{}",
+                "testcommunity/users/{}",
                 "12345",
                 401,
                 OpenGovAuthenticationError,
             ),
             (
                 opengov_api.list_user_flags,
-                "https://api.plce.opengov.com/plce/v2/testcommunity/users/{}/flags",
+                "testcommunity/users/{}/flags",
                 "12345",
                 429,
                 OpenGovRateLimitError,
@@ -450,15 +464,16 @@ class TestGetEndpoints:
     def test_get_error_handling(
         self,
         endpoint_func,
-        url_template,
+        url_path_template,
         resource_id,
         status_code,
         exception_class,
         httpx_mock: HTTPXMock,
         configure_client,
+        build_url,
     ):
         """All get endpoints handle HTTP errors consistently."""
-        url = url_template.format(resource_id)
+        url = build_url(url_path_template.format(resource_id))
         httpx_mock.add_response(
             url=url, status_code=status_code, json={"message": "Error message"}
         )

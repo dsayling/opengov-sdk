@@ -15,7 +15,7 @@ class TestUsersEndpoint:
     """Tests specific to the users endpoint."""
 
     def test_list_users_with_pagination_data(
-        self, httpx_mock: HTTPXMock, configure_client
+        self, httpx_mock: HTTPXMock, configure_client, build_url
     ):
         """Test list_users with pagination metadata."""
         mock_response = {
@@ -23,7 +23,7 @@ class TestUsersEndpoint:
             "pagination": {"page": 1, "total_pages": 5, "total_items": 50},
         }
         httpx_mock.add_response(
-            url="https://api.plce.opengov.com/plce/v2/testcommunity/users",
+            url=build_url("testcommunity/users"),
             json=mock_response,
         )
 
@@ -33,7 +33,7 @@ class TestUsersEndpoint:
         assert result["pagination"]["total_pages"] == 5
         assert result["pagination"]["total_items"] == 50
 
-    def test_create_user(self, httpx_mock: HTTPXMock, configure_client):
+    def test_create_user(self, httpx_mock: HTTPXMock, configure_client, build_url):
         """Test creating a new user."""
         request_data = {
             "data": {
@@ -59,7 +59,7 @@ class TestUsersEndpoint:
         }
 
         httpx_mock.add_response(
-            url="https://api.plce.opengov.com/plce/v2/testcommunity/users",
+            url=build_url("testcommunity/users"),
             method="POST",
             json=mock_response,
         )

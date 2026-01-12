@@ -63,7 +63,9 @@ class TestNetworkBlocking:
         # Clear the unmocked requests so teardown doesn't fail
         httpx_mock._requests_not_matched.clear()
 
-    def test_network_calls_succeed_with_proper_mock(self, httpx_mock: HTTPXMock):
+    def test_network_calls_succeed_with_proper_mock(
+        self, httpx_mock: HTTPXMock, build_url
+    ):
         """
         Test that mocked calls work correctly.
 
@@ -75,7 +77,7 @@ class TestNetworkBlocking:
         # Set up the mock
         import re
 
-        url = "https://api.plce.opengov.com/plce/v2/testcommunity/records"
+        url = build_url("testcommunity/records")
         httpx_mock.add_response(
             url=re.compile(re.escape(url) + r"(\?.*)?$"),
             json={"data": [], "meta": {}, "links": {}},
@@ -85,6 +87,9 @@ class TestNetworkBlocking:
         result = opengov_api.list_records()
         assert hasattr(result, "data")  # Verify we got a response
 
+    @pytest.mark.skip(
+        reason="This test is expected to fail - documents behavior when mocks are missing"
+    )
     def test_unmocked_request_causes_test_failure(self, configure_client):
         """
         Test that unmocked requests cause the test to fail at teardown.
@@ -95,10 +100,6 @@ class TestNetworkBlocking:
 
         This test is expected to fail - it's here to document the behavior.
         """
-        pytest.skip(
-            "Skipping test that intentionally fails - documents behavior when mocks are missing"
-        )
-
         # This would cause pytest-httpx to fail during teardown
         # because no mock is set up for this request
         opengov_api.list_records()
