@@ -55,6 +55,7 @@ class TestRecordTypesEndpoint:
         assert hasattr(result, "links")
 
         # Verify data is typed
+        assert isinstance(result.data, list)
         assert len(result.data) == 1
         record_type = result.data[0]
         assert record_type.id == "rt-12345"
@@ -98,6 +99,7 @@ class TestRecordTypesEndpoint:
 
         result = opengov_api.list_record_types(department_id="dept-123")
 
+        assert isinstance(result.data, list)
         assert len(result.data) == 1
         assert result.data[0].attributes.name == "Business License"
 

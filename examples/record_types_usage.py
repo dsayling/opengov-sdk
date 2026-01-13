@@ -13,15 +13,17 @@ opengov_api.set_community("your-community")
 # Example 1: List all record types
 print("Example 1: List all record types")
 record_types = opengov_api.list_record_types()
-for record_type in record_types.data:
-    print(f"  - {record_type.attributes.name} (ID: {record_type.id})")
-    print(f"    Status: {record_type.attributes.status}")
-    print(f"    Enabled: {record_type.attributes.is_enabled}")
+if isinstance(record_types.data, list):
+    for record_type in record_types.data:
+        print(f"  - {record_type.attributes.name} (ID: {record_type.id})")
+        print(f"    Status: {record_type.attributes.status}")
+        print(f"    Enabled: {record_type.attributes.is_enabled}")
 
 # Example 2: Filter by department
 print("\nExample 2: Filter by department")
 dept_record_types = opengov_api.list_record_types(department_id="dept-123")
-print(f"Found {len(dept_record_types.data)} record types in department")
+if isinstance(dept_record_types.data, list):
+    print(f"Found {len(dept_record_types.data)} record types in department")
 
 # Example 3: Get a specific record type
 print("\nExample 3: Get a specific record type")

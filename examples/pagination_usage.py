@@ -16,32 +16,34 @@ opengov_api.set_community("your-community")
 print("Example 1: List active records")
 print("=" * 50)
 response = opengov_api.list_records(
-    filter_status=RecordStatus.ACTIVE, filter_is_enabled=True, page_size=10
+    status=RecordStatus.ACTIVE, is_enabled=True, page_size=10
 )
 
 print(f"Page {response.current_page()} of {response.total_pages()}")
 print(f"Total records: {response.total_records()}")
-print(f"Records on this page: {len(response.data)}")
+if isinstance(response.data, list):
+    print(f"Records on this page: {len(response.data)}")
 
-for record in response.data:
-    print(f"  - {record.attributes.name} ({record.attributes.number})")
+    for record in response.data:
+        print(f"  - {record.attributes.name} ({record.attributes.number})")
 
 # Example 2: Date range filtering
 print("\nExample 2: Records created after March 1, 2025")
 print("=" * 50)
 response = opengov_api.list_records(
-    filter_created_at=DateRangeFilter(gt=date(2025, 3, 1)),
-    filter_status=RecordStatus.ACTIVE,
+    created_at=DateRangeFilter(gt=date(2025, 3, 1)),
+    status=RecordStatus.ACTIVE,
 )
 
-for record in response.data:
-    print(f"  - {record.attributes.name} created {record.attributes.created_at}")
+if isinstance(response.data, list):
+    for record in response.data:
+        print(f"  - {record.attributes.name} created {record.attributes.created_at}")
 
 # Example 3: Complex date range (Q1 2025)
 print("\nExample 3: Records from Q1 2025")
 print("=" * 50)
 response = opengov_api.list_records(
-    filter_created_at=DateRangeFilter(gte=date(2025, 1, 1), lt=date(2025, 4, 1))
+    created_at=DateRangeFilter(gte=date(2025, 1, 1), lt=date(2025, 4, 1))
 )
 
 print(f"Found {response.total_records()} records in Q1 2025")
@@ -50,26 +52,28 @@ print(f"Found {response.total_records()} records in Q1 2025")
 print("\nExample 4: Manual pagination")
 print("=" * 50)
 response = opengov_api.list_records(
-    filter_status=RecordStatus.ACTIVE, page_number=1, page_size=20
+    status=RecordStatus.ACTIVE, page_number=1, page_size=20
 )
 
-print(f"First page: {len(response.data)} records")
+if isinstance(response.data, list):
+    print(f"First page: {len(response.data)} records")
 
 if response.has_next_page():
-    next_response = opengov_api.list_records(
-        filter_status=RecordStatus.ACTIVE,
-        page_number=response.current_page() + 1,
-        page_size=20,
-    )
-    print(f"Second page: {len(next_response.data)} records")
+    current = response.current_page()
+    if current is not None:
+        next_response = opengov_api.list_records(
+            status=RecordStatus.ACTIVE,
+            page_number=current + 1,
+            page_size=20,
+        )
+        if isinstance(next_response.data, list):
+            print(f"Second page: {len(next_response.data)} records")
 
 # Example 5: Auto-pagination with iterator
 print("\nExample 5: Auto-pagination with iterator")
 print("=" * 50)
 count = 0
-for record in opengov_api.iter_records(
-    filter_status=RecordStatus.ACTIVE, filter_is_enabled=True
-):
+for record in opengov_api.iter_records(status=RecordStatus.ACTIVE, is_enabled=True):
     count += 1
     print(f"  Processing record {count}: {record.attributes.name}")
     if count >= 5:  # Just show first 5 for demo
@@ -80,10 +84,10 @@ for record in opengov_api.iter_records(
 print("\nExample 6: Complex filtering")
 print("=" * 50)
 response = opengov_api.list_records(
-    filter_status=RecordStatus.COMPLETE,
-    filter_type_id="building-permit-type-id",
-    filter_submitted_online=True,
-    filter_created_at=DateRangeFilter(gte=date(2025, 1, 1)),
+    status=RecordStatus.COMPLETE,
+    type_id="building-permit-type-id",
+    submitted_online=True,
+    created_at=DateRangeFilter(gte=date(2025, 1, 1)),
     sort="-createdAt",  # Sort by creation date descending
     page_size=50,
 )
@@ -94,15 +98,16 @@ print(f"Found {response.total_records()} completed online building permits since
 print("\nExample 7: JSON:API features")
 print("=" * 50)
 response = opengov_api.list_records(
-    filter_status=RecordStatus.ACTIVE,
+    status=RecordStatus.ACTIVE,
     include=["applicant", "primaryLocation"],
     fields={"records": ["name", "number", "status"]},
     page_size=10,
 )
 
-for record in response.data:
-    # Only name, number, and status will be in attributes
-    print(f"  - {record.attributes.name}: {record.attributes.number}")
+if isinstance(response.data, list):
+    for record in response.data:
+        # Only name, number, and status will be in attributes
+        print(f"  - {record.attributes.name}: {record.attributes.number}")
 
 # Included resources are available in response.included
 if response.included:
