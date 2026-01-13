@@ -301,6 +301,47 @@ ListRecordWorkflowStepCommentsParams = BaseListParams
 ListRecordCollectionsParams = BaseListParams
 
 
+class ListRecordTypesParams(BaseModel):
+    """
+    Query parameters for listing record types.
+
+    Example:
+        >>> from opengov_api.models import ListRecordTypesParams
+        >>>
+        >>> # Filter by department
+        >>> params = ListRecordTypesParams(
+        ...     filter_department_id="dept-123",
+        ...     page_size=50
+        ... )
+    """
+
+    # Filters
+    filter_department_id: str | None = None
+
+    # Pagination
+    page_number: int = Field(1, ge=1)
+    page_size: int = Field(20, ge=1, le=100)
+
+    def to_query_params(self) -> dict[str, Any]:
+        """
+        Convert to query parameter dict with proper JSON:API bracket notation.
+
+        Returns:
+            Dictionary suitable for httpx params argument
+        """
+        params: dict[str, Any] = {}
+
+        # Simple filters
+        if self.filter_department_id:
+            params["filter[departmentID]"] = self.filter_department_id
+
+        # Pagination
+        params["page[number]"] = self.page_number
+        params["page[size]"] = self.page_size
+
+        return params
+
+
 class ListDocumentStepsParams(BaseModel):
     """
     Query parameters for listing document steps.

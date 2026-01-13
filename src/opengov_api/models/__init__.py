@@ -25,6 +25,7 @@ from .params import (
     ListRecordCollectionsParams,
     ListRecordGuestsParams,
     ListRecordsParams,
+    ListRecordTypesParams,
     ListRecordWorkflowStepCommentsParams,
     ListRecordWorkflowStepsParams,
     PageParams,
@@ -51,6 +52,7 @@ from .records import (
     WorkflowStepCommentResource,
     WorkflowStepResource,
 )
+from .record_types import RecordTypeAttributes, RecordTypeResource
 
 __all__ = [
     # Base JSON:API models
@@ -77,6 +79,7 @@ __all__ = [
     "ListRecordWorkflowStepsParams",
     "ListRecordWorkflowStepCommentsParams",
     "ListRecordCollectionsParams",
+    "ListRecordTypesParams",
     "PageParams",
     # Documents
     "DocumentStepAttributes",
@@ -103,4 +106,7 @@ __all__ = [
     "WorkflowStepCommentResource",
     "CollectionAttributes",
     "CollectionResource",
+    # Record Types
+    "RecordTypeAttributes",
+    "RecordTypeResource",
 ]

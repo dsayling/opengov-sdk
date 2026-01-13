@@ -130,6 +130,20 @@ from .projects import (
     list_projects,
     get_project,
 )
+from .record_types import (
+    list_record_types,
+    iter_record_types,
+    get_record_type,
+    list_record_type_attachments,
+    get_record_type_attachment,
+    list_record_type_document_templates,
+    get_record_type_document_template,
+    list_record_type_fees,
+    get_record_type_fee,
+    get_record_type_form,
+    list_record_type_workflow,
+    get_record_type_workflow_step,
+)
 
 # Exceptions
 from .exceptions import (
@@ -257,6 +271,19 @@ __all__ = [
     # Projects
     "list_projects",
     "get_project",
+    # Record Types
+    "list_record_types",
+    "iter_record_types",
+    "get_record_type",
+    "list_record_type_attachments",
+    "get_record_type_attachment",
+    "list_record_type_document_templates",
+    "get_record_type_document_template",
+    "list_record_type_fees",
+    "get_record_type_fee",
+    "get_record_type_form",
+    "list_record_type_workflow",
+    "get_record_type_workflow_step",
     # Exceptions
     "OpenGovAPIError",
     "OpenGovConfigurationError",

@@ -64,6 +64,11 @@ class TestListEndpoints:
                 "testcommunity/projects",
                 "projects",
             ),
+            (
+                opengov_api.list_record_types,
+                "testcommunity/record-types",
+                "record-types",
+            ),
         ],
     )
     def test_list_success(
@@ -157,6 +162,11 @@ class TestListEndpoints:
                 opengov_api.list_projects,
                 "testcommunity/projects",
                 "projects",
+            ),
+            (
+                opengov_api.list_record_types,
+                "testcommunity/record-types",
+                "record-types",
             ),
         ],
     )
@@ -323,6 +333,26 @@ class TestGetEndpoints:
                 "testcommunity/projects/{}",
                 "12345",
             ),
+            (
+                opengov_api.get_record_type,
+                "testcommunity/record-types/{}",
+                "rt-12345",
+            ),
+            (
+                opengov_api.get_record_type_attachment,
+                "testcommunity/record-types/attachments/{}",
+                "rt-attachment-12345",
+            ),
+            (
+                opengov_api.get_record_type_document_template,
+                "testcommunity/record-types/document-templates/{}",
+                "rt-doc-12345",
+            ),
+            (
+                opengov_api.get_record_type_fee,
+                "testcommunity/record-types/fees/{}",
+                "rt-fee-12345",
+            ),
         ],
     )
     def test_get_success(
@@ -400,6 +430,26 @@ class TestGetEndpoints:
                 opengov_api.get_project,
                 "testcommunity/projects/{}",
                 "99999",
+            ),
+            (
+                opengov_api.get_record_type,
+                "testcommunity/record-types/{}",
+                "rt-99999",
+            ),
+            (
+                opengov_api.get_record_type_attachment,
+                "testcommunity/record-types/attachments/{}",
+                "rt-attachment-99999",
+            ),
+            (
+                opengov_api.get_record_type_document_template,
+                "testcommunity/record-types/document-templates/{}",
+                "rt-doc-99999",
+            ),
+            (
+                opengov_api.get_record_type_fee,
+                "testcommunity/record-types/fees/{}",
+                "rt-fee-99999",
             ),
         ],
     )
