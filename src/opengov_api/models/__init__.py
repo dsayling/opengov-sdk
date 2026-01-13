@@ -8,15 +8,24 @@ from .base import (
     RelationshipData,
     ResourceObject,
 )
-from .enums import RecordStatus, StepKind, WorkflowStepStatus
+from .documents import DocumentStepAttributes, DocumentStepResource
+from .enums import (
+    DocumentStepStatus,
+    DocumentType,
+    RecordStatus,
+    StepKind,
+    WorkflowStepStatus,
+)
 from .params import (
     BaseListParams,
     DateRangeFilter,
+    ListDocumentStepsParams,
     ListRecordAdditionalLocationsParams,
     ListRecordAttachmentsParams,
     ListRecordCollectionsParams,
     ListRecordGuestsParams,
     ListRecordsParams,
+    ListRecordTypesParams,
     ListRecordWorkflowStepCommentsParams,
     ListRecordWorkflowStepsParams,
     PageParams,
@@ -43,6 +52,7 @@ from .records import (
     WorkflowStepCommentResource,
     WorkflowStepResource,
 )
+from .record_types import RecordTypeAttributes, RecordTypeResource
 
 __all__ = [
     # Base JSON:API models
@@ -53,12 +63,15 @@ __all__ = [
     "RelationshipData",
     "ResourceObject",
     # Enums
+    "DocumentStepStatus",
+    "DocumentType",
     "RecordStatus",
     "StepKind",
     "WorkflowStepStatus",
     # Params
     "BaseListParams",
     "DateRangeFilter",
+    "ListDocumentStepsParams",
     "ListRecordsParams",
     "ListRecordGuestsParams",
     "ListRecordAdditionalLocationsParams",
@@ -66,7 +79,11 @@ __all__ = [
     "ListRecordWorkflowStepsParams",
     "ListRecordWorkflowStepCommentsParams",
     "ListRecordCollectionsParams",
+    "ListRecordTypesParams",
     "PageParams",
+    # Documents
+    "DocumentStepAttributes",
+    "DocumentStepResource",
     # Records
     "RecordAttributes",
     "RecordCreateAttributes",
@@ -89,4 +106,7 @@ __all__ = [
     "WorkflowStepCommentResource",
     "CollectionAttributes",
     "CollectionResource",
+    # Record Types
+    "RecordTypeAttributes",
+    "RecordTypeResource",
 ]

@@ -35,3 +35,23 @@ class StepKind(str, Enum):
     RELATED_RECORD = "RELATED_RECORD"
     SHADOW = "SHADOW"
     REVIEW = "REVIEW"
+
+
+class DocumentStepStatus(str, Enum):
+    """Document step status enum."""
+
+    REJECTED = "REJECTED"
+    INACTIVE = "INACTIVE"
+    ACTIVE = "ACTIVE"
+    COMPLETE = "COMPLETE"
+    SKIPPED = "SKIPPED"
+    ON_HOLD = "ON_HOLD"
+
+
+class DocumentType(str, Enum):
+    """Document type enum."""
+
+    PERMIT_LICENSE = "Permit/License"
+    LETTER = "Letter"
+    CERTIFICATE = "Certificate"
+    OTHER = "Other"
