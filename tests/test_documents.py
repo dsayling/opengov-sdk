@@ -45,6 +45,7 @@ class TestDocumentStepsFiltering:
 
         response = opengov_api.list_document_steps(record_id="record-12345")
 
+        assert isinstance(response.data, list)
         assert len(response.data) == 1
         assert response.data[0].id == "doc-step-1"
         assert response.data[0].attributes.label == "Generate Certificate"
@@ -80,6 +81,7 @@ class TestDocumentStepsFiltering:
 
         response = opengov_api.list_document_steps(status=DocumentStepStatus.ACTIVE)
 
+        assert isinstance(response.data, list)
         assert len(response.data) == 1
         assert response.data[0].attributes.status == "ACTIVE"
 
@@ -117,6 +119,7 @@ class TestDocumentStepsFiltering:
 
         response = opengov_api.list_document_steps(label="Building Permit")
 
+        assert isinstance(response.data, list)
         assert len(response.data) == 1
         assert response.data[0].attributes.label == "Building Permit"
 
@@ -156,6 +159,7 @@ class TestDocumentStepsFiltering:
         filter_date = date(2025, 3, 1)
         response = opengov_api.list_document_steps(completed_at=filter_date)
 
+        assert isinstance(response.data, list)
         assert len(response.data) == 1
 
         # Verify the filter was sent in the request
@@ -194,6 +198,7 @@ class TestDocumentStepsFiltering:
         date_range = DateRangeFilter(gte=date(2025, 3, 1), lt=date(2025, 4, 1))
         response = opengov_api.list_document_steps(activated_at=date_range)
 
+        assert isinstance(response.data, list)
         assert len(response.data) == 1
 
         # Verify the filter was sent in the request
@@ -241,6 +246,7 @@ class TestDocumentStepsFiltering:
             label="Certificate",
         )
 
+        assert isinstance(response.data, list)
         assert len(response.data) == 1
 
         # Verify all filters were sent
@@ -287,6 +293,7 @@ class TestDocumentStepsPagination:
 
         response = opengov_api.list_document_steps(page_number=1, page_size=5)
 
+        assert isinstance(response.data, list)
         assert len(response.data) == 5
         assert response.current_page() == 1
         assert response.total_pages() == 3
@@ -508,6 +515,7 @@ class TestDocumentStepsEdgeCases:
         filter_datetime = datetime(2025, 3, 15, 10, 0, 0)
         response = opengov_api.list_document_steps(completed_at=filter_datetime)
 
+        assert isinstance(response.data, list)
         assert len(response.data) == 1
 
         # Verify datetime was formatted correctly

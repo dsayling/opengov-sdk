@@ -10,9 +10,10 @@ Provides:
 
 import functools
 import json
-from typing import Any, Callable
+from typing import Any, Callable, ParamSpec, TypeVar
 
 import httpx
+
 
 from .exceptions import (
     OpenGovAPIConnectionError,
@@ -26,6 +27,10 @@ from .exceptions import (
     OpenGovRateLimitError,
     OpenGovResponseParseError,
 )
+
+# Type variables for preserving function signatures in decorators
+P = ParamSpec("P")
+R = TypeVar("R")
 
 
 def build_url(base_url: str, community: str, endpoint: str) -> str:
@@ -118,8 +123,8 @@ def parse_json_response(response: httpx.Response) -> dict[str, Any]:
 
 
 def handle_request_errors(
-    func: Callable[..., Any],
-) -> Callable[..., Any]:
+    func: Callable[P, R],
+) -> Callable[P, R]:
     """
     Decorator to wrap httpx exceptions into custom exceptions.
 
@@ -131,7 +136,7 @@ def handle_request_errors(
     """
 
     @functools.wraps(func)
-    def wrapper(*args: Any, **kwargs: Any) -> Any:
+    def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
         try:
             return func(*args, **kwargs)
         except httpx.TimeoutException as e:

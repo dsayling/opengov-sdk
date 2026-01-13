@@ -27,11 +27,12 @@ def example_list_records():
     print("\n=== Listing Records ===")
     try:
         records = opengov_api.list_records()
-        print(f"Found {len(records.get('records', []))} records")
-        # Print first record if available
-        if records.get("records"):
-            first_record = records["records"][0]
-            print(f"First record: {first_record}")
+        if isinstance(records.data, list):
+            print(f"Found {len(records.data)} records")
+            # Print first record if available
+            if records.data:
+                first_record = records.data[0]
+                print(f"First record: {first_record}")
     except OpenGovAPIError as e:
         print(f"Error listing records: {e}")
 
