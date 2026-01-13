@@ -17,6 +17,11 @@ dependencies = [
 requires = ["uv_build>=0.9.24,<0.10.0"]
 build-backend = "uv_build"
 
+[tool.uv_build]
+include = [
+    "LLM.txt",
+]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 python_files = ["test_*.py"]

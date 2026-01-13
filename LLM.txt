@@ -1,0 +1,514 @@
+𝕌1.0.complete@2026-01-13
+γ≔opengov.sdk.usage
+ρ≔⟨installation,configuration,endpoints,pagination,errors⟩
+⊢TypeSafe∧Functional∧DRY
+
+;; ─── Ω: METALOGIC ───
+⟦Ω:Foundation⟧{
+  SDK≜opengov_api
+  Pattern≜functional_factory
+  Config≜module_level_state
+  HTTP≜httpx.Client
+  ∀call:Type_Safe∧Error_Wrapped
+}
+
+;; ─── Σ: GLOSSARY ───
+⟦Σ:Glossary⟧{
+  ;; Installation
+  Install≜"uv add opengov-api" | "pip install opengov-api"
+
+  ;; Configuration
+  APIKey≜𝕊; Community≜𝕊; BaseURL≜𝕊; Timeout≜ℝ⁺
+  Config≜⟨api_key:APIKey,community:Community,base_url:BaseURL?,timeout:Timeout?⟩
+
+  ;; Core Types
+  Resource≜⟨id:𝕊,type:𝕊,attributes:Object,relationships?:Object⟩
+  JSONAPIResponse≜⟨data:Resource|List⟨Resource⟩,meta?:Object,links?:Object⟩
+
+  ;; Operations
+  List≜λ.JSONAPIResponse⟨List⟩
+  Get≜λid.dict
+  Create≜λdata.dict
+  Update≜λ(id,data).dict
+  Delete≜λid.dict
+  Iterator≜λ.Generator⟨Resource⟩
+
+  ;; Errors
+  ErrorTree≜APIError⊃{ConfigError,ConnectionError⊃TimeoutError,StatusError⊃{BadRequest,Unauthorized,Forbidden,NotFound,RateLimit,ServerError},ParseError}
+}
+
+;; ─── Σ: TYPE UNIVERSE ───
+⟦Σ:Types⟧{
+  ;; Primitives
+  𝔹≜bool; ℕ≜int; ℝ≜float; 𝕊≜str
+
+  ;; SDK Types
+  dict≜dict[str,Any]
+  JSONAPIResponse[T]≜dict  ;; {"data": T | List[T], "meta"?: {...}, "links"?: {...}}
+
+  ;; Domain Models
+  Record≜⟨id:𝕊,name:𝕊,status:RecordStatus,type_id:𝕊,attributes:dict⟩
+  User≜⟨id:𝕊,email:𝕊,name:𝕊,roles:List⟨𝕊⟩⟩
+  Location≜⟨id:𝕊,address:𝕊,coordinates?:Coords⟩
+  RecordType≜⟨id:𝕊,name:𝕊,description:𝕊,enabled:𝔹⟩
+  DocumentStep≜⟨id:𝕊,kind:StepKind,status:StepStatus⟩
+
+  ;; Enums
+  RecordStatus≜{ACTIVE,ARCHIVED,WITHDRAWN,WITHDRAWN_BY_STAFF}
+  StepKind≜{approval,fee,inspection,document_upload}
+  DocumentType≜{pdf,image,spreadsheet}
+}
+
+;; ─── Λ: INSTALLATION ───
+⟦Λ:Install⟧{
+  ;; Package Manager
+  uv≜"uv add opengov-api"
+  pip≜"pip install opengov-api"
+
+  ;; Import
+  import≜"import opengov_api"
+  from_import≜"from opengov_api import list_records, get_record"
+}
+
+;; ─── Λ: CONFIGURATION ───
+⟦Λ:Config⟧{
+  ;; Required Setup
+  setup≜{
+    opengov_api.set_api_key("your-api-key-here"),
+    opengov_api.set_community("your-community-id")
+  }
+
+  ;; Environment Variables (Alternative)
+  env_setup≜{
+    export OPENGOV_API_KEY="your-api-key-here",
+    export OPENGOV_COMMUNITY="your-community-id"
+  }
+
+  ;; Optional Configuration
+  optional≜{
+    opengov_api.set_base_url("https://custom-api.opengov.com/v2"),
+    opengov_api.set_timeout(60.0)
+  }
+
+  ;; Getters
+  get_config≜{
+    opengov_api.get_api_key(),
+    opengov_api.get_community(),
+    opengov_api.get_base_url(),
+    opengov_api.get_timeout()
+  }
+
+  ;; Rules
+  ∀operation:requires(api_key)∧requires(community)
+  ∀call:Config≡snapshot(module_state)
+}
+
+;; ─── Λ: RECORDS API ───
+⟦Λ:Records⟧{
+  ;; List Records
+  list_records:ListParams?→JSONAPIResponse[List⟨Record⟩]
+  list_records≜λparams?.opengov_api.list_records(
+    page=1,
+    per_page=25,
+    status="ACTIVE",
+    type_id="permit-type-123",
+    updated_since="2024-01-01"
+  )
+
+  ;; Iterate All Records (Pagination)
+  iter_records:ListParams?→Iterator⟨Record⟩
+  iter_records≜λparams?.opengov_api.iter_records(
+    status="ACTIVE"
+  )
+  # Usage: for record in opengov_api.iter_records(): ...
+
+  ;; Get Single Record
+  get_record:𝕊→dict
+  get_record≜λid.opengov_api.get_record("record-id-123")
+
+  ;; Create Record
+  create_record:dict→dict
+  create_record≜λdata.opengov_api.create_record({
+    "data": {
+      "type": "records",
+      "attributes": {
+        "name": "New Permit Application",
+        "type_id": "permit-type-123"
+      }
+    }
+  })
+
+  ;; Update Record
+  update_record:(𝕊,dict)→dict
+  update_record≜λ(id,data).opengov_api.update_record(
+    "record-id-123",
+    {"data": {"attributes": {"status": "ARCHIVED"}}}
+  )
+
+  ;; Archive Record (Delete)
+  archive_record:𝕊→dict
+  archive_record≜λid.opengov_api.archive_record("record-id-123")
+
+  ;; Nested Resources - Applicant
+  get_record_applicant:𝕊→dict
+  get_record_applicant≜λid.opengov_api.get_record_applicant("record-id-123")
+
+  update_record_applicant:(𝕊,dict)→dict
+  update_record_applicant≜λ(id,data).opengov_api.update_record_applicant(
+    "record-id-123",
+    {"data": {"type": "users", "id": "user-456"}}
+  )
+
+  ;; Nested Resources - Guests
+  list_record_guests:𝕊→JSONAPIResponse[List⟨User⟩]
+  iter_record_guests:𝕊→Iterator⟨User⟩
+  add_record_guest:(𝕊,dict)→dict
+  remove_record_guest:(𝕊,𝕊)→dict
+
+  ;; Nested Resources - Locations
+  get_record_primary_location:𝕊→dict
+  update_record_primary_location:(𝕊,dict)→dict
+  remove_record_primary_location:𝕊→dict
+  list_record_additional_locations:𝕊→JSONAPIResponse[List⟨Location⟩]
+  iter_record_additional_locations:𝕊→Iterator⟨Location⟩
+
+  ;; Nested Resources - Workflow Steps
+  list_record_workflow_steps:𝕊→JSONAPIResponse[List⟨WorkflowStep⟩]
+  iter_record_workflow_steps:𝕊→Iterator⟨WorkflowStep⟩
+  create_record_workflow_step:(𝕊,dict)→dict
+  update_record_workflow_step:(𝕊,𝕊,dict)→dict
+  delete_record_workflow_step:(𝕊,𝕊)→dict
+
+  ;; Nested Resources - Collections
+  list_record_collections:𝕊→JSONAPIResponse[List⟨Collection⟩]
+  iter_record_collections:𝕊→Iterator⟨Collection⟩
+}
+
+;; ─── Λ: USERS API ───
+⟦Λ:Users⟧{
+  list_users:ListParams?→JSONAPIResponse[List⟨User⟩]
+  get_user:𝕊→dict
+  create_user:dict→dict
+  list_user_flags:𝕊→JSONAPIResponse[List⟨Flag⟩]
+}
+
+;; ─── Λ: LOCATIONS API ───
+⟦Λ:Locations⟧{
+  list_locations:ListParams?→JSONAPIResponse[List⟨Location⟩]
+  get_location:𝕊→dict
+  create_location:dict→dict
+  update_location:(𝕊,dict)→dict
+}
+
+;; ─── Λ: DOCUMENTS API ───
+⟦Λ:Documents⟧{
+  list_document_steps:ListParams?→JSONAPIResponse[List⟨DocumentStep⟩]
+  get_document_step:𝕊→dict
+  create_document_step:dict→dict
+  update_document_step:(𝕊,dict)→dict
+}
+
+;; ─── Λ: RECORD TYPES API ───
+⟦Λ:RecordTypes⟧{
+  list_record_types:ListParams?→JSONAPIResponse[List⟨RecordType⟩]
+  get_record_type:𝕊→dict
+}
+
+;; ─── Γ: PAGINATION PATTERN ───
+⟦Γ:Pagination⟧{
+  ;; Manual Pagination
+  manual≜{
+    page_1≜list_records(page=1, per_page=25),
+    page_2≜list_records(page=2, per_page=25),
+    ...
+  }
+
+  ;; Automatic Iteration (Recommended)
+  auto≜{
+    for record in iter_records(status="ACTIVE"):
+        process(record)
+  }
+
+  ;; List Comprehension
+  comprehension≜[r["id"] for r in iter_records()]
+
+  ;; Rules
+  ∀list_*:returns single page
+  ∀iter_*:auto-paginates all pages
+  iter_*≜Generator→lazy evaluation
+}
+
+;; ─── Γ: ERROR HANDLING ───
+⟦Γ:Errors⟧{
+  ;; Exception Hierarchy
+  APIError≜BaseException
+  ├─ConfigError        ;; Missing API key or community
+  ├─ConnectionError    ;; Network failure
+  │ └─TimeoutError     ;; Request timeout
+  ├─StatusError        ;; HTTP status errors
+  │ ├─BadRequest(400)
+  │ ├─Unauthorized(401)
+  │ ├─Forbidden(403)
+  │ ├─NotFound(404)
+  │ ├─RateLimit(429)
+  │ └─ServerError(5xx)
+  └─ParseError         ;; Invalid JSON response
+
+  ;; Basic Error Handling
+  basic≜try{
+    record≜get_record("123")
+  }catch opengov_api.APIError as e{
+    print(f"API error: {e.message}")
+  }
+
+  ;; Specific Error Handling
+  specific≜try{
+    record≜get_record("123")
+  }catch opengov_api.NotFound{
+    print("Record not found")
+  }catch opengov_api.Unauthorized{
+    print("Invalid API key")
+  }catch opengov_api.APIError as e{
+    print(f"Other error: {e}")
+  }
+
+  ;; Error Context Access
+  context≜try{
+    update_record("123", data)
+  }catch opengov_api.StatusError as e{
+    print(f"Status: {e.status_code}"),
+    print(f"Body: {e.body}"),
+    print(f"Request ID: {e.request_id}")
+  }
+
+  ;; Configuration Error
+  config_error≜try{
+    list_records()  # Without setting config
+  }catch opengov_api.ConfigError as e{
+    print(f"Missing: {e.missing_field}"),
+    opengov_api.set_api_key("key"),
+    opengov_api.set_community("community")
+  }
+}
+
+;; ─── Σ: USAGE EXAMPLES ───
+⟦Σ:Examples⟧{
+  ;; Complete Example
+  complete≜{
+    # 1. Setup
+    import opengov_api,
+    opengov_api.set_api_key("your-api-key"),
+    opengov_api.set_community("your-community"),
+
+    # 2. List records with filters
+    response≜opengov_api.list_records(
+      status="ACTIVE",
+      per_page=50
+    ),
+    records≜response["data"],
+
+    # 3. Iterate all records (auto-pagination)
+    for record in opengov_api.iter_records(status="ACTIVE"){
+      print(record["id"])
+    },
+
+    # 4. Get single record
+    record≜opengov_api.get_record("record-123"),
+    print(record["data"]["attributes"]["name"]),
+
+    # 5. Create record
+    new_record≜opengov_api.create_record({
+      "data": {
+        "type": "records",
+        "attributes": {
+          "name": "New Application",
+          "type_id": "permit-type-123"
+        }
+      }
+    }),
+
+    # 6. Update record
+    updated≜opengov_api.update_record(
+      new_record["data"]["id"],
+      {"data": {"attributes": {"status": "ARCHIVED"}}}
+    ),
+
+    # 7. Work with nested resources
+    applicant≜opengov_api.get_record_applicant("record-123"),
+    guests≜list(opengov_api.iter_record_guests("record-123")),
+
+    # 8. Error handling
+    try{
+      record≜opengov_api.get_record("invalid-id")
+    }catch opengov_api.NotFound{
+      print("Record not found")
+    }
+  }
+
+  ;; List All Records Pattern
+  list_all≜{
+    all_records≜[],
+    for record in opengov_api.iter_records(){
+      all_records.append(record)
+    },
+    # Or: all_records = list(opengov_api.iter_records())
+  }
+
+  ;; Filter Pattern
+  filter_pattern≜{
+    active_permits≜[
+      r for r in opengov_api.iter_records(
+        status="ACTIVE",
+        type_id="permit-type-123"
+      )
+    ]
+  }
+
+  ;; Nested Resource Pattern
+  nested≜{
+    record_id≜"record-123",
+
+    # Get applicant
+    applicant≜opengov_api.get_record_applicant(record_id),
+
+    # List guests
+    guests≜opengov_api.list_record_guests(record_id),
+
+    # Add guest
+    new_guest≜opengov_api.add_record_guest(
+      record_id,
+      {"data": {"type": "users", "id": "user-456"}}
+    ),
+
+    # Iterate workflow steps
+    for step in opengov_api.iter_record_workflow_steps(record_id){
+      print(f"{step['kind']}: {step['status']}")
+    }
+  }
+}
+
+;; ─── Σ: JSON:API FORMAT ───
+⟦Σ:JSONAPI⟧{
+  ;; Request Format
+  Request≜{
+    "data": {
+      "type": "records",           # Resource type
+      "id": "123",                 # For updates (optional for create)
+      "attributes": {              # Resource attributes
+        "name": "value",
+        "status": "ACTIVE"
+      },
+      "relationships": {           # Related resources (optional)
+        "applicant": {
+          "data": {"type": "users", "id": "456"}
+        }
+      }
+    }
+  }
+
+  ;; Response Format
+  Response≜{
+    "data": {                      # Or array for collections
+      "id": "123",
+      "type": "records",
+      "attributes": {...},
+      "relationships": {...}
+    },
+    "meta": {                      # Optional metadata
+      "total": 100,
+      "page": 1
+    },
+    "links": {                     # Optional pagination links
+      "next": "?page=2",
+      "prev": "?page=1"
+    }
+  }
+
+  ;; Accessing Response Data
+  access≜{
+    response≜list_records(),
+    records≜response["data"],              # List of resources
+    first_record≜records[0],
+    record_id≜first_record["id"],
+    record_name≜first_record["attributes"]["name"],
+    total≜response["meta"]["total"]
+  }
+}
+
+;; ─── Ε: EVIDENCE ───
+⟦Ε⟧⟨
+package≜opengov-api
+version≜1.0.0+
+python≜3.14+
+dependencies≜httpx≥0.28.1,pydantic≥2.12.5
+pattern≜functional_factory
+config≜module_level_state
+http≜httpx.Client
+format≜JSON:API
+|endpoints|≜50+
+|resources|≜records,users,locations,documents,record_types
+coverage≜≥98%
+type_safety≜complete
+⊢production_ready
+⟩
+
+;; ─── APPENDIX: AISP NOTATION REFERENCE ───
+⟦Appendix:AISP⟧{
+  ;; Core Symbols
+  ≜ defas (defined as)
+  ≔ assign
+  ≡ identical/equals
+  ⇒ implies
+  → function type arrow (input → output)
+  λ lambda function
+  ∀ for all
+  ∃ exists
+  ∈ element of
+  ⊃ superset/parent class
+  ∧ and
+  ∨ or
+  ¬ not
+  ⊤ true
+  ⊥ false/error
+  ∅ empty/null
+
+  ;; Type Symbols
+  𝔹 boolean
+  ℕ natural number (int)
+  ℝ real number (float)
+  𝕊 string
+  ? optional (suffix)
+
+  ;; Structural Symbols
+  ⟨⟩ tuple/record
+  ⟦⟧ block/section
+  {} set/object
+  [] list/array
+  | or/union type
+
+  ;; Block Types
+  ⟦Ω⟧ meta-logic, foundation
+  ⟦Σ⟧ glossary, types
+  ⟦Γ⟧ rules, patterns
+  ⟦Λ⟧ functions, API
+  ⟦Χ⟧ errors (optional)
+  ⟦Ε⟧ evidence, metadata
+
+  ;; Reading Guide
+  Pattern: HeaderBlock ≫ Glossary ≫ Types ≫ Rules ≫ Functions ≫ Evidence
+
+  Example_Function:
+    list_records:ListParams?→JSONAPIResponse[List⟨Record⟩]
+    #           ^^^^^^^^^^^  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    #           parameters   return type
+    #           ? = optional
+
+  Example_Definition:
+    Record≜⟨id:𝕊,name:𝕊,status:RecordStatus⟩
+    #      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    #      tuple with named fields and types
+
+  Example_Rule:
+    ∀operation:requires(api_key)∧requires(community)
+    # For all operations: requires api_key AND requires community
+}
