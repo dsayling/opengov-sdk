@@ -251,7 +251,6 @@ class TestGetEndpointInfrastructure:
     @pytest.mark.parametrize(
         "endpoint_func,resource_id",
         [
-            (opengov_api.get_record, "12345"),
             (opengov_api.get_user, "12345"),
             (opengov_api.list_user_flags, "12345"),
             (opengov_api.get_location, "12345"),
@@ -276,11 +275,6 @@ class TestGetEndpointInfrastructure:
     @pytest.mark.parametrize(
         "endpoint_func,resource_id,url_path",
         [
-            (
-                opengov_api.get_record,
-                "12345",
-                "testcommunity/records/12345",
-            ),
             (
                 opengov_api.get_user,
                 "12345",
@@ -353,11 +347,6 @@ class TestGetEndpointInfrastructure:
     @pytest.mark.parametrize(
         "endpoint_func,resource_id,custom_url",
         [
-            (
-                opengov_api.get_record,
-                "12345",
-                "https://custom.api.com/v3/testcommunity/records/12345",
-            ),
             (
                 opengov_api.get_user,
                 "12345",

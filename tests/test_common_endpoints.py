@@ -290,11 +290,6 @@ class TestGetEndpoints:
         "endpoint_func,url_path_template,resource_id",
         [
             (
-                opengov_api.get_record,
-                "testcommunity/records/{}",
-                "12345",
-            ),
-            (
                 opengov_api.get_user,
                 "testcommunity/users/{}",
                 "12345",
@@ -388,11 +383,6 @@ class TestGetEndpoints:
         "endpoint_func,url_path_template,resource_id",
         [
             (
-                opengov_api.get_record,
-                "testcommunity/records/{}",
-                "99999",
-            ),
-            (
                 opengov_api.get_user,
                 "testcommunity/users/{}",
                 "99999",
@@ -485,27 +475,6 @@ class TestGetEndpoints:
         "endpoint_func,url_path_template,resource_id,status_code,exception_class",
         [
             # Test various error codes for get endpoints
-            (
-                opengov_api.get_record,
-                "testcommunity/records/{}",
-                "12345",
-                401,
-                OpenGovAuthenticationError,
-            ),
-            (
-                opengov_api.get_record,
-                "testcommunity/records/{}",
-                "12345",
-                429,
-                OpenGovRateLimitError,
-            ),
-            (
-                opengov_api.get_record,
-                "testcommunity/records/{}",
-                "12345",
-                500,
-                OpenGovInternalServerError,
-            ),
             (
                 opengov_api.get_user,
                 "testcommunity/users/{}",

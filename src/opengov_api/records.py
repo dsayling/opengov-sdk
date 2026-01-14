@@ -56,9 +56,13 @@ from typing import Any, Iterator
 from .base import build_url, handle_request_errors, parse_json_response
 from .client import _get_client, get_base_url, get_community
 from .models import (
+    ApplicantResource,
     AttachmentResource,
+    ChangeRequestResource,
+    CollectionEntryResource,
     CollectionResource,
     DateRangeFilter,
+    FormResource,
     GuestResource,
     JSONAPIResponse,
     Links,
@@ -613,7 +617,7 @@ def iter_record_collections(
 
 
 @handle_request_errors
-def get_record(record_id: str) -> dict[str, Any]:
+def get_record(record_id: str) -> JSONAPIResponse[RecordResource]:
     """
     Get a specific record by ID.
 
@@ -621,7 +625,7 @@ def get_record(record_id: str) -> dict[str, Any]:
         record_id: The ID of the record to retrieve
 
     Returns:
-        Dictionary containing record data from the API
+        JSONAPIResponse containing a single RecordResource
 
     Raises:
         OpenGovConfigurationError: If API key or community is not configured
@@ -635,18 +639,25 @@ def get_record(record_id: str) -> dict[str, Any]:
         >>> import opengov_api
         >>> opengov_api.set_api_key("your-api-key")
         >>> opengov_api.set_community("your-community")
-        >>> record = opengov_api.get_record("12345")
-        >>> print(record)
+        >>> response = opengov_api.get_record("12345")
+        >>> print(response.data.attributes.name)
     """
     with _get_client() as client:
         url = build_url(get_base_url(), get_community(), f"records/{record_id}")
         response = client.get(url)
         response.raise_for_status()
-        return parse_json_response(response)
+        data = parse_json_response(response)
+
+        return JSONAPIResponse[RecordResource](
+            data=RecordResource(**data["data"]),
+            included=data.get("included"),
+            links=Links(**data["links"]) if data.get("links") else None,
+            meta=Meta(**data["meta"]) if data.get("meta") else None,
+        )
 
 
 @handle_request_errors
-def create_record(data: dict[str, Any]) -> dict[str, Any]:
+def create_record(data: dict[str, Any]) -> JSONAPIResponse[RecordResource]:
     """
     Create a new record.
 
@@ -654,7 +665,7 @@ def create_record(data: dict[str, Any]) -> dict[str, Any]:
         data: Dictionary containing the record data to create
 
     Returns:
-        Dictionary containing the created record data from the API
+        JSONAPIResponse containing the created RecordResource
 
     Raises:
         OpenGovConfigurationError: If API key or community is not configured
@@ -668,18 +679,27 @@ def create_record(data: dict[str, Any]) -> dict[str, Any]:
         >>> opengov_api.set_api_key("your-api-key")
         >>> opengov_api.set_community("your-community")
         >>> record_data = {"data": {"type": "records", "attributes": {...}}}
-        >>> record = opengov_api.create_record(record_data)
-        >>> print(record)
+        >>> response = opengov_api.create_record(record_data)
+        >>> print(response.data.attributes.name)
     """
     with _get_client() as client:
         url = build_url(get_base_url(), get_community(), "records")
         response = client.post(url, json=data)
         response.raise_for_status()
-        return parse_json_response(response)
+        data = parse_json_response(response)
+
+        return JSONAPIResponse[RecordResource](
+            data=RecordResource(**data["data"]),
+            included=data.get("included"),
+            links=Links(**data["links"]) if data.get("links") else None,
+            meta=Meta(**data["meta"]) if data.get("meta") else None,
+        )
 
 
 @handle_request_errors
-def update_record(record_id: str, data: dict[str, Any]) -> dict[str, Any]:
+def update_record(
+    record_id: str, data: dict[str, Any]
+) -> JSONAPIResponse[RecordResource]:
     """
     Update an existing record.
 
@@ -688,7 +708,7 @@ def update_record(record_id: str, data: dict[str, Any]) -> dict[str, Any]:
         data: Dictionary containing the record data to update
 
     Returns:
-        Dictionary containing the updated record data from the API
+        JSONAPIResponse containing the updated RecordResource
 
     Raises:
         OpenGovConfigurationError: If API key or community is not configured
@@ -703,26 +723,30 @@ def update_record(record_id: str, data: dict[str, Any]) -> dict[str, Any]:
         >>> opengov_api.set_api_key("your-api-key")
         >>> opengov_api.set_community("your-community")
         >>> record_data = {"data": {"type": "records", "attributes": {...}}}
-        >>> record = opengov_api.update_record("12345", record_data)
-        >>> print(record)
+        >>> response = opengov_api.update_record("12345", record_data)
+        >>> print(response.data.attributes.name)
     """
     with _get_client() as client:
         url = build_url(get_base_url(), get_community(), f"records/{record_id}")
         response = client.patch(url, json=data)
         response.raise_for_status()
-        return parse_json_response(response)
+        data = parse_json_response(response)
+
+        return JSONAPIResponse[RecordResource](
+            data=RecordResource(**data["data"]),
+            included=data.get("included"),
+            links=Links(**data["links"]) if data.get("links") else None,
+            meta=Meta(**data["meta"]) if data.get("meta") else None,
+        )
 
 
 @handle_request_errors
-def archive_record(record_id: str) -> dict[str, Any]:
+def archive_record(record_id: str) -> None:
     """
     Archive a record.
 
     Args:
         record_id: The ID of the record to archive
-
-    Returns:
-        Dictionary containing the response from the API
 
     Raises:
         OpenGovConfigurationError: If API key or community is not configured
@@ -730,25 +754,22 @@ def archive_record(record_id: str) -> dict[str, Any]:
         OpenGovAPITimeoutError: If request times out
         OpenGovNotFoundError: If record is not found (404)
         OpenGovAPIStatusError: If API returns an error status code
-        OpenGovResponseParseError: If response cannot be parsed as JSON
 
     Example:
         >>> import opengov_api
         >>> opengov_api.set_api_key("your-api-key")
         >>> opengov_api.set_community("your-community")
-        >>> result = opengov_api.archive_record("12345")
-        >>> print(result)
+        >>> opengov_api.archive_record("12345")
     """
     with _get_client() as client:
         url = build_url(get_base_url(), get_community(), f"records/{record_id}")
         response = client.delete(url)
         response.raise_for_status()
-        return parse_json_response(response)
 
 
 # Record Form endpoints
 @handle_request_errors
-def get_record_form(record_id: str) -> dict[str, Any]:
+def get_record_form(record_id: str) -> FormResource:
     """
     Get form data for a record.
 
@@ -756,7 +777,7 @@ def get_record_form(record_id: str) -> dict[str, Any]:
         record_id: The ID of the record
 
     Returns:
-        Dictionary containing the record form data from the API
+        FormResource containing the record form data
 
     Raises:
         OpenGovConfigurationError: If API key or community is not configured
@@ -771,17 +792,20 @@ def get_record_form(record_id: str) -> dict[str, Any]:
         >>> opengov_api.set_api_key("your-api-key")
         >>> opengov_api.set_community("your-community")
         >>> form = opengov_api.get_record_form("12345")
-        >>> print(form)
+        >>> print(form.fields)
     """
     with _get_client() as client:
         url = build_url(get_base_url(), get_community(), f"records/{record_id}/form")
         response = client.get(url)
         response.raise_for_status()
-        return parse_json_response(response)
+        data = parse_json_response(response)
+
+        # Forms use non-standard format: {"data": {"fields": [...]}}
+        return FormResource(**data["data"])
 
 
 @handle_request_errors
-def update_record_form(record_id: str, data: dict[str, Any]) -> dict[str, Any]:
+def update_record_form(record_id: str, data: dict[str, Any]) -> FormResource:
     """
     Update form data for a record.
 
@@ -790,7 +814,7 @@ def update_record_form(record_id: str, data: dict[str, Any]) -> dict[str, Any]:
         data: Dictionary containing the form data to update
 
     Returns:
-        Dictionary containing the updated record form data from the API
+        FormResource containing the updated record form data
 
     Raises:
         OpenGovConfigurationError: If API key or community is not configured
@@ -806,18 +830,21 @@ def update_record_form(record_id: str, data: dict[str, Any]) -> dict[str, Any]:
         >>> opengov_api.set_community("your-community")
         >>> form_data = {"data": {...}}
         >>> form = opengov_api.update_record_form("12345", form_data)
-        >>> print(form)
+        >>> print(form.fields)
     """
     with _get_client() as client:
         url = build_url(get_base_url(), get_community(), f"records/{record_id}/form")
         response = client.patch(url, json=data)
         response.raise_for_status()
-        return parse_json_response(response)
+        data = parse_json_response(response)
+
+        # Forms use non-standard format: {"data": {"fields": [...]}}
+        return FormResource(**data["data"])
 
 
 # Record Applicant endpoints
 @handle_request_errors
-def get_record_applicant(record_id: str) -> dict[str, Any]:
+def get_record_applicant(record_id: str) -> JSONAPIResponse[ApplicantResource]:
     """
     Get the applicant for a record.
 
@@ -825,7 +852,7 @@ def get_record_applicant(record_id: str) -> dict[str, Any]:
         record_id: The ID of the record
 
     Returns:
-        Dictionary containing the applicant data from the API
+        JSONAPIResponse containing the applicant data
 
     Raises:
         OpenGovConfigurationError: If API key or community is not configured
@@ -840,7 +867,7 @@ def get_record_applicant(record_id: str) -> dict[str, Any]:
         >>> opengov_api.set_api_key("your-api-key")
         >>> opengov_api.set_community("your-community")
         >>> applicant = opengov_api.get_record_applicant("12345")
-        >>> print(applicant)
+        >>> print(applicant.data.id)
     """
     with _get_client() as client:
         url = build_url(
@@ -848,11 +875,20 @@ def get_record_applicant(record_id: str) -> dict[str, Any]:
         )
         response = client.get(url)
         response.raise_for_status()
-        return parse_json_response(response)
+        data = parse_json_response(response)
+
+        return JSONAPIResponse[ApplicantResource](
+            data=ApplicantResource(**data["data"]),
+            included=data.get("included"),
+            links=Links(**data["links"]) if data.get("links") else None,
+            meta=Meta(**data["meta"]) if data.get("meta") else None,
+        )
 
 
 @handle_request_errors
-def update_record_applicant(record_id: str, data: dict[str, Any]) -> dict[str, Any]:
+def update_record_applicant(
+    record_id: str, data: dict[str, Any]
+) -> JSONAPIResponse[ApplicantResource]:
     """
     Update the applicant for a record.
 
@@ -861,7 +897,7 @@ def update_record_applicant(record_id: str, data: dict[str, Any]) -> dict[str, A
         data: Dictionary containing the applicant data to update
 
     Returns:
-        Dictionary containing the updated applicant data from the API
+        JSONAPIResponse containing the updated applicant data
 
     Raises:
         OpenGovConfigurationError: If API key or community is not configured
@@ -877,7 +913,7 @@ def update_record_applicant(record_id: str, data: dict[str, Any]) -> dict[str, A
         >>> opengov_api.set_community("your-community")
         >>> applicant_data = {"data": {...}}
         >>> applicant = opengov_api.update_record_applicant("12345", applicant_data)
-        >>> print(applicant)
+        >>> print(applicant.data.id)
     """
     with _get_client() as client:
         url = build_url(
@@ -885,19 +921,23 @@ def update_record_applicant(record_id: str, data: dict[str, Any]) -> dict[str, A
         )
         response = client.patch(url, json=data)
         response.raise_for_status()
-        return parse_json_response(response)
+        data = parse_json_response(response)
+
+        return JSONAPIResponse[ApplicantResource](
+            data=ApplicantResource(**data["data"]),
+            included=data.get("included"),
+            links=Links(**data["links"]) if data.get("links") else None,
+            meta=Meta(**data["meta"]) if data.get("meta") else None,
+        )
 
 
 @handle_request_errors
-def remove_record_applicant(record_id: str) -> dict[str, Any]:
+def remove_record_applicant(record_id: str) -> None:
     """
     Remove the applicant from a record.
 
     Args:
         record_id: The ID of the record
-
-    Returns:
-        Dictionary containing the response from the API
 
     Raises:
         OpenGovConfigurationError: If API key or community is not configured
@@ -905,14 +945,12 @@ def remove_record_applicant(record_id: str) -> dict[str, Any]:
         OpenGovAPITimeoutError: If request times out
         OpenGovNotFoundError: If record is not found (404)
         OpenGovAPIStatusError: If API returns an error status code
-        OpenGovResponseParseError: If response cannot be parsed as JSON
 
     Example:
         >>> import opengov_api
         >>> opengov_api.set_api_key("your-api-key")
         >>> opengov_api.set_community("your-community")
-        >>> result = opengov_api.remove_record_applicant("12345")
-        >>> print(result)
+        >>> opengov_api.remove_record_applicant("12345")
     """
     with _get_client() as client:
         url = build_url(
@@ -920,7 +958,6 @@ def remove_record_applicant(record_id: str) -> dict[str, Any]:
         )
         response = client.delete(url)
         response.raise_for_status()
-        return parse_json_response(response)
 
 
 # Record Guests endpoints
@@ -987,7 +1024,9 @@ def list_record_guests(
 
 
 @handle_request_errors
-def add_record_guest(record_id: str, data: dict[str, Any]) -> dict[str, Any]:
+def add_record_guest(
+    record_id: str, data: dict[str, Any]
+) -> JSONAPIResponse[GuestResource]:
     """
     Add a guest to a record.
 
@@ -996,7 +1035,7 @@ def add_record_guest(record_id: str, data: dict[str, Any]) -> dict[str, Any]:
         data: Dictionary containing the guest data
 
     Returns:
-        Dictionary containing the added guest data from the API
+        JSONAPIResponse containing the added GuestResource
 
     Raises:
         OpenGovConfigurationError: If API key or community is not configured
@@ -1011,18 +1050,25 @@ def add_record_guest(record_id: str, data: dict[str, Any]) -> dict[str, Any]:
         >>> opengov_api.set_api_key("your-api-key")
         >>> opengov_api.set_community("your-community")
         >>> guest_data = {"data": {...}}
-        >>> guest = opengov_api.add_record_guest("12345", guest_data)
-        >>> print(guest)
+        >>> response = opengov_api.add_record_guest("12345", guest_data)
+        >>> print(response.data.attributes.name)
     """
     with _get_client() as client:
         url = build_url(get_base_url(), get_community(), f"records/{record_id}/guests")
         response = client.post(url, json=data)
         response.raise_for_status()
-        return parse_json_response(response)
+        data = parse_json_response(response)
+
+        return JSONAPIResponse[GuestResource](
+            data=GuestResource(**data["data"]),
+            included=data.get("included"),
+            links=Links(**data["links"]) if data.get("links") else None,
+            meta=Meta(**data["meta"]) if data.get("meta") else None,
+        )
 
 
 @handle_request_errors
-def get_record_guest(record_id: str, user_id: str) -> dict[str, Any]:
+def get_record_guest(record_id: str, user_id: str) -> JSONAPIResponse[GuestResource]:
     """
     Get a specific guest on a record.
 
@@ -1031,7 +1077,7 @@ def get_record_guest(record_id: str, user_id: str) -> dict[str, Any]:
         user_id: The ID of the guest user
 
     Returns:
-        Dictionary containing guest data from the API
+        JSONAPIResponse containing the GuestResource
 
     Raises:
         OpenGovConfigurationError: If API key or community is not configured
@@ -1045,8 +1091,8 @@ def get_record_guest(record_id: str, user_id: str) -> dict[str, Any]:
         >>> import opengov_api
         >>> opengov_api.set_api_key("your-api-key")
         >>> opengov_api.set_community("your-community")
-        >>> guest = opengov_api.get_record_guest("12345", "user-123")
-        >>> print(guest)
+        >>> response = opengov_api.get_record_guest("12345", "user-123")
+        >>> print(response.data.attributes.name)
     """
     with _get_client() as client:
         url = build_url(
@@ -1054,11 +1100,18 @@ def get_record_guest(record_id: str, user_id: str) -> dict[str, Any]:
         )
         response = client.get(url)
         response.raise_for_status()
-        return parse_json_response(response)
+        data = parse_json_response(response)
+
+        return JSONAPIResponse[GuestResource](
+            data=GuestResource(**data["data"]),
+            included=data.get("included"),
+            links=Links(**data["links"]) if data.get("links") else None,
+            meta=Meta(**data["meta"]) if data.get("meta") else None,
+        )
 
 
 @handle_request_errors
-def remove_record_guest(record_id: str, user_id: str) -> dict[str, Any]:
+def remove_record_guest(record_id: str, user_id: str) -> None:
     """
     Remove a guest from a record.
 
@@ -1066,23 +1119,18 @@ def remove_record_guest(record_id: str, user_id: str) -> dict[str, Any]:
         record_id: The ID of the record
         user_id: The ID of the guest user to remove
 
-    Returns:
-        Dictionary containing the response from the API
-
     Raises:
         OpenGovConfigurationError: If API key or community is not configured
         OpenGovAPIConnectionError: If connection fails
         OpenGovAPITimeoutError: If request times out
         OpenGovNotFoundError: If record or guest is not found (404)
         OpenGovAPIStatusError: If API returns an error status code
-        OpenGovResponseParseError: If response cannot be parsed as JSON
 
     Example:
         >>> import opengov_api
         >>> opengov_api.set_api_key("your-api-key")
         >>> opengov_api.set_community("your-community")
-        >>> result = opengov_api.remove_record_guest("12345", "user-123")
-        >>> print(result)
+        >>> opengov_api.remove_record_guest("12345", "user-123")
     """
     with _get_client() as client:
         url = build_url(
@@ -1090,12 +1138,11 @@ def remove_record_guest(record_id: str, user_id: str) -> dict[str, Any]:
         )
         response = client.delete(url)
         response.raise_for_status()
-        return parse_json_response(response)
 
 
 # Record Primary Location endpoints
 @handle_request_errors
-def get_record_primary_location(record_id: str) -> dict[str, Any]:
+def get_record_primary_location(record_id: str) -> JSONAPIResponse[LocationResource]:
     """
     Get the primary location for a record.
 
@@ -1103,7 +1150,7 @@ def get_record_primary_location(record_id: str) -> dict[str, Any]:
         record_id: The ID of the record
 
     Returns:
-        Dictionary containing the primary location data from the API
+        JSONAPIResponse containing the LocationResource
 
     Raises:
         OpenGovConfigurationError: If API key or community is not configured
@@ -1117,8 +1164,8 @@ def get_record_primary_location(record_id: str) -> dict[str, Any]:
         >>> import opengov_api
         >>> opengov_api.set_api_key("your-api-key")
         >>> opengov_api.set_community("your-community")
-        >>> location = opengov_api.get_record_primary_location("12345")
-        >>> print(location)
+        >>> response = opengov_api.get_record_primary_location("12345")
+        >>> print(response.data.attributes.address)
     """
     with _get_client() as client:
         url = build_url(
@@ -1126,13 +1173,20 @@ def get_record_primary_location(record_id: str) -> dict[str, Any]:
         )
         response = client.get(url)
         response.raise_for_status()
-        return parse_json_response(response)
+        data = parse_json_response(response)
+
+        return JSONAPIResponse[LocationResource](
+            data=LocationResource(**data["data"]),
+            included=data.get("included"),
+            links=Links(**data["links"]) if data.get("links") else None,
+            meta=Meta(**data["meta"]) if data.get("meta") else None,
+        )
 
 
 @handle_request_errors
 def update_record_primary_location(
     record_id: str, data: dict[str, Any]
-) -> dict[str, Any]:
+) -> JSONAPIResponse[LocationResource]:
     """
     Update the primary location for a record.
 
@@ -1141,7 +1195,7 @@ def update_record_primary_location(
         data: Dictionary containing the location data to update
 
     Returns:
-        Dictionary containing the updated primary location data from the API
+        JSONAPIResponse containing the updated LocationResource
 
     Raises:
         OpenGovConfigurationError: If API key or community is not configured
@@ -1156,8 +1210,8 @@ def update_record_primary_location(
         >>> opengov_api.set_api_key("your-api-key")
         >>> opengov_api.set_community("your-community")
         >>> location_data = {"data": {...}}
-        >>> location = opengov_api.update_record_primary_location("12345", location_data)
-        >>> print(location)
+        >>> response = opengov_api.update_record_primary_location("12345", location_data)
+        >>> print(response.data.attributes.address)
     """
     with _get_client() as client:
         url = build_url(
@@ -1165,19 +1219,23 @@ def update_record_primary_location(
         )
         response = client.patch(url, json=data)
         response.raise_for_status()
-        return parse_json_response(response)
+        data = parse_json_response(response)
+
+        return JSONAPIResponse[LocationResource](
+            data=LocationResource(**data["data"]),
+            included=data.get("included"),
+            links=Links(**data["links"]) if data.get("links") else None,
+            meta=Meta(**data["meta"]) if data.get("meta") else None,
+        )
 
 
 @handle_request_errors
-def remove_record_primary_location(record_id: str) -> dict[str, Any]:
+def remove_record_primary_location(record_id: str) -> None:
     """
     Remove the primary location from a record.
 
     Args:
         record_id: The ID of the record
-
-    Returns:
-        Dictionary containing the response from the API
 
     Raises:
         OpenGovConfigurationError: If API key or community is not configured
@@ -1185,14 +1243,12 @@ def remove_record_primary_location(record_id: str) -> dict[str, Any]:
         OpenGovAPITimeoutError: If request times out
         OpenGovNotFoundError: If record is not found (404)
         OpenGovAPIStatusError: If API returns an error status code
-        OpenGovResponseParseError: If response cannot be parsed as JSON
 
     Example:
         >>> import opengov_api
         >>> opengov_api.set_api_key("your-api-key")
         >>> opengov_api.set_community("your-community")
-        >>> result = opengov_api.remove_record_primary_location("12345")
-        >>> print(result)
+        >>> opengov_api.remove_record_primary_location("12345")
     """
     with _get_client() as client:
         url = build_url(
@@ -1200,7 +1256,6 @@ def remove_record_primary_location(record_id: str) -> dict[str, Any]:
         )
         response = client.delete(url)
         response.raise_for_status()
-        return parse_json_response(response)
 
 
 # Record Additional Locations endpoints
@@ -1271,7 +1326,7 @@ def list_record_additional_locations(
 @handle_request_errors
 def add_record_additional_location(
     record_id: str, data: dict[str, Any]
-) -> dict[str, Any]:
+) -> JSONAPIResponse[LocationResource]:
     """
     Add an additional location to a record.
 
@@ -1280,7 +1335,7 @@ def add_record_additional_location(
         data: Dictionary containing the location data
 
     Returns:
-        Dictionary containing the added location data from the API
+        JSONAPIResponse containing the added LocationResource
 
     Raises:
         OpenGovConfigurationError: If API key or community is not configured
@@ -1295,8 +1350,8 @@ def add_record_additional_location(
         >>> opengov_api.set_api_key("your-api-key")
         >>> opengov_api.set_community("your-community")
         >>> location_data = {"data": {...}}
-        >>> location = opengov_api.add_record_additional_location("12345", location_data)
-        >>> print(location)
+        >>> response = opengov_api.add_record_additional_location("12345", location_data)
+        >>> print(response.data.attributes.address)
     """
     with _get_client() as client:
         url = build_url(
@@ -1304,11 +1359,20 @@ def add_record_additional_location(
         )
         response = client.post(url, json=data)
         response.raise_for_status()
-        return parse_json_response(response)
+        data = parse_json_response(response)
+
+        return JSONAPIResponse[LocationResource](
+            data=LocationResource(**data["data"]),
+            included=data.get("included"),
+            links=Links(**data["links"]) if data.get("links") else None,
+            meta=Meta(**data["meta"]) if data.get("meta") else None,
+        )
 
 
 @handle_request_errors
-def get_record_additional_location(record_id: str, location_id: str) -> dict[str, Any]:
+def get_record_additional_location(
+    record_id: str, location_id: str
+) -> JSONAPIResponse[LocationResource]:
     """
     Get a specific additional location on a record.
 
@@ -1317,7 +1381,7 @@ def get_record_additional_location(record_id: str, location_id: str) -> dict[str
         location_id: The ID of the location
 
     Returns:
-        Dictionary containing location data from the API
+        JSONAPIResponse containing the LocationResource
 
     Raises:
         OpenGovConfigurationError: If API key or community is not configured
@@ -1331,8 +1395,8 @@ def get_record_additional_location(record_id: str, location_id: str) -> dict[str
         >>> import opengov_api
         >>> opengov_api.set_api_key("your-api-key")
         >>> opengov_api.set_community("your-community")
-        >>> location = opengov_api.get_record_additional_location("12345", "loc-123")
-        >>> print(location)
+        >>> response = opengov_api.get_record_additional_location("12345", "loc-123")
+        >>> print(response.data.attributes.address)
     """
     with _get_client() as client:
         url = build_url(
@@ -1342,13 +1406,18 @@ def get_record_additional_location(record_id: str, location_id: str) -> dict[str
         )
         response = client.get(url)
         response.raise_for_status()
-        return parse_json_response(response)
+        data = parse_json_response(response)
+
+        return JSONAPIResponse[LocationResource](
+            data=LocationResource(**data["data"]),
+            included=data.get("included"),
+            links=Links(**data["links"]) if data.get("links") else None,
+            meta=Meta(**data["meta"]) if data.get("meta") else None,
+        )
 
 
 @handle_request_errors
-def remove_record_additional_location(
-    record_id: str, location_id: str
-) -> dict[str, Any]:
+def remove_record_additional_location(record_id: str, location_id: str) -> None:
     """
     Remove an additional location from a record.
 
@@ -1356,23 +1425,18 @@ def remove_record_additional_location(
         record_id: The ID of the record
         location_id: The ID of the location to remove
 
-    Returns:
-        Dictionary containing the response from the API
-
     Raises:
         OpenGovConfigurationError: If API key or community is not configured
         OpenGovAPIConnectionError: If connection fails
         OpenGovAPITimeoutError: If request times out
         OpenGovNotFoundError: If record or location is not found (404)
         OpenGovAPIStatusError: If API returns an error status code
-        OpenGovResponseParseError: If response cannot be parsed as JSON
 
     Example:
         >>> import opengov_api
         >>> opengov_api.set_api_key("your-api-key")
         >>> opengov_api.set_community("your-community")
-        >>> result = opengov_api.remove_record_additional_location("12345", "loc-123")
-        >>> print(result)
+        >>> opengov_api.remove_record_additional_location("12345", "loc-123")
     """
     with _get_client() as client:
         url = build_url(
@@ -1382,7 +1446,6 @@ def remove_record_additional_location(
         )
         response = client.delete(url)
         response.raise_for_status()
-        return parse_json_response(response)
 
 
 # Record Attachments endpoints
@@ -1451,7 +1514,9 @@ def list_record_attachments(
 
 
 @handle_request_errors
-def add_record_attachment(record_id: str, data: dict[str, Any]) -> dict[str, Any]:
+def add_record_attachment(
+    record_id: str, data: dict[str, Any]
+) -> JSONAPIResponse[AttachmentResource]:
     """
     Add an attachment to a record.
 
@@ -1460,7 +1525,7 @@ def add_record_attachment(record_id: str, data: dict[str, Any]) -> dict[str, Any
         data: Dictionary containing the attachment data
 
     Returns:
-        Dictionary containing the added attachment data from the API
+        JSONAPIResponse containing the added AttachmentResource
 
     Raises:
         OpenGovConfigurationError: If API key or community is not configured
@@ -1475,8 +1540,8 @@ def add_record_attachment(record_id: str, data: dict[str, Any]) -> dict[str, Any
         >>> opengov_api.set_api_key("your-api-key")
         >>> opengov_api.set_community("your-community")
         >>> attachment_data = {"data": {...}}
-        >>> attachment = opengov_api.add_record_attachment("12345", attachment_data)
-        >>> print(attachment)
+        >>> response = opengov_api.add_record_attachment("12345", attachment_data)
+        >>> print(response.data.attributes.filename)
     """
     with _get_client() as client:
         url = build_url(
@@ -1484,11 +1549,20 @@ def add_record_attachment(record_id: str, data: dict[str, Any]) -> dict[str, Any
         )
         response = client.post(url, json=data)
         response.raise_for_status()
-        return parse_json_response(response)
+        data = parse_json_response(response)
+
+        return JSONAPIResponse[AttachmentResource](
+            data=AttachmentResource(**data["data"]),
+            included=data.get("included"),
+            links=Links(**data["links"]) if data.get("links") else None,
+            meta=Meta(**data["meta"]) if data.get("meta") else None,
+        )
 
 
 @handle_request_errors
-def get_record_attachment(record_id: str, attachment_id: str) -> dict[str, Any]:
+def get_record_attachment(
+    record_id: str, attachment_id: str
+) -> JSONAPIResponse[AttachmentResource]:
     """
     Get a specific attachment on a record.
 
@@ -1497,7 +1571,7 @@ def get_record_attachment(record_id: str, attachment_id: str) -> dict[str, Any]:
         attachment_id: The ID of the attachment
 
     Returns:
-        Dictionary containing attachment data from the API
+        JSONAPIResponse containing the AttachmentResource
 
     Raises:
         OpenGovConfigurationError: If API key or community is not configured
@@ -1511,8 +1585,8 @@ def get_record_attachment(record_id: str, attachment_id: str) -> dict[str, Any]:
         >>> import opengov_api
         >>> opengov_api.set_api_key("your-api-key")
         >>> opengov_api.set_community("your-community")
-        >>> attachment = opengov_api.get_record_attachment("12345", "att-123")
-        >>> print(attachment)
+        >>> response = opengov_api.get_record_attachment("12345", "att-123")
+        >>> print(response.data.attributes.filename)
     """
     with _get_client() as client:
         url = build_url(
@@ -1522,11 +1596,18 @@ def get_record_attachment(record_id: str, attachment_id: str) -> dict[str, Any]:
         )
         response = client.get(url)
         response.raise_for_status()
-        return parse_json_response(response)
+        data = parse_json_response(response)
+
+        return JSONAPIResponse[AttachmentResource](
+            data=AttachmentResource(**data["data"]),
+            included=data.get("included"),
+            links=Links(**data["links"]) if data.get("links") else None,
+            meta=Meta(**data["meta"]) if data.get("meta") else None,
+        )
 
 
 @handle_request_errors
-def remove_record_attachment(record_id: str, attachment_id: str) -> dict[str, Any]:
+def remove_record_attachment(record_id: str, attachment_id: str) -> None:
     """
     Remove an attachment from a record.
 
@@ -1534,23 +1615,18 @@ def remove_record_attachment(record_id: str, attachment_id: str) -> dict[str, An
         record_id: The ID of the record
         attachment_id: The ID of the attachment to remove
 
-    Returns:
-        Dictionary containing the response from the API
-
     Raises:
         OpenGovConfigurationError: If API key or community is not configured
         OpenGovAPIConnectionError: If connection fails
         OpenGovAPITimeoutError: If request times out
         OpenGovNotFoundError: If record or attachment is not found (404)
         OpenGovAPIStatusError: If API returns an error status code
-        OpenGovResponseParseError: If response cannot be parsed as JSON
 
     Example:
         >>> import opengov_api
         >>> opengov_api.set_api_key("your-api-key")
         >>> opengov_api.set_community("your-community")
-        >>> result = opengov_api.remove_record_attachment("12345", "att-123")
-        >>> print(result)
+        >>> opengov_api.remove_record_attachment("12345", "att-123")
     """
     with _get_client() as client:
         url = build_url(
@@ -1560,12 +1636,13 @@ def remove_record_attachment(record_id: str, attachment_id: str) -> dict[str, An
         )
         response = client.delete(url)
         response.raise_for_status()
-        return parse_json_response(response)
 
 
 # Record Change Requests endpoints
 @handle_request_errors
-def get_record_change_request(record_id: str, change_request_id: str) -> dict[str, Any]:
+def get_record_change_request(
+    record_id: str, change_request_id: str
+) -> JSONAPIResponse[ChangeRequestResource]:
     """
     Get a change request for a record.
 
@@ -1574,7 +1651,7 @@ def get_record_change_request(record_id: str, change_request_id: str) -> dict[st
         change_request_id: The ID of the change request
 
     Returns:
-        Dictionary containing change request data from the API
+        JSONAPIResponse containing change request data
 
     Raises:
         OpenGovConfigurationError: If API key or community is not configured
@@ -1589,7 +1666,7 @@ def get_record_change_request(record_id: str, change_request_id: str) -> dict[st
         >>> opengov_api.set_api_key("your-api-key")
         >>> opengov_api.set_community("your-community")
         >>> change_request = opengov_api.get_record_change_request("12345", "cr-123")
-        >>> print(change_request)
+        >>> print(change_request.data.id)
     """
     with _get_client() as client:
         url = build_url(
@@ -1599,11 +1676,20 @@ def get_record_change_request(record_id: str, change_request_id: str) -> dict[st
         )
         response = client.get(url)
         response.raise_for_status()
-        return parse_json_response(response)
+        data = parse_json_response(response)
+
+        return JSONAPIResponse[ChangeRequestResource](
+            data=ChangeRequestResource(**data["data"]),
+            included=data.get("included"),
+            links=Links(**data["links"]) if data.get("links") else None,
+            meta=Meta(**data["meta"]) if data.get("meta") else None,
+        )
 
 
 @handle_request_errors
-def get_most_recent_record_change_request(record_id: str) -> dict[str, Any]:
+def get_most_recent_record_change_request(
+    record_id: str,
+) -> JSONAPIResponse[ChangeRequestResource]:
     """
     Get the most recent change request for a record.
 
@@ -1611,7 +1697,7 @@ def get_most_recent_record_change_request(record_id: str) -> dict[str, Any]:
         record_id: The ID of the record
 
     Returns:
-        Dictionary containing change request data from the API
+        JSONAPIResponse containing change request data
 
     Raises:
         OpenGovConfigurationError: If API key or community is not configured
@@ -1626,7 +1712,7 @@ def get_most_recent_record_change_request(record_id: str) -> dict[str, Any]:
         >>> opengov_api.set_api_key("your-api-key")
         >>> opengov_api.set_community("your-community")
         >>> change_request = opengov_api.get_most_recent_record_change_request("12345")
-        >>> print(change_request)
+        >>> print(change_request.data.id)
     """
     with _get_client() as client:
         url = build_url(
@@ -1634,13 +1720,20 @@ def get_most_recent_record_change_request(record_id: str) -> dict[str, Any]:
         )
         response = client.get(url)
         response.raise_for_status()
-        return parse_json_response(response)
+        data = parse_json_response(response)
+
+        return JSONAPIResponse[ChangeRequestResource](
+            data=ChangeRequestResource(**data["data"]),
+            included=data.get("included"),
+            links=Links(**data["links"]) if data.get("links") else None,
+            meta=Meta(**data["meta"]) if data.get("meta") else None,
+        )
 
 
 @handle_request_errors
 def create_record_change_request(
     record_id: str, data: dict[str, Any]
-) -> dict[str, Any]:
+) -> JSONAPIResponse[ChangeRequestResource]:
     """
     Create a change request for a record.
 
@@ -1649,7 +1742,7 @@ def create_record_change_request(
         data: Dictionary containing the change request data
 
     Returns:
-        Dictionary containing the created change request data from the API
+        JSONAPIResponse containing the created change request data
 
     Raises:
         OpenGovConfigurationError: If API key or community is not configured
@@ -1665,7 +1758,7 @@ def create_record_change_request(
         >>> opengov_api.set_community("your-community")
         >>> change_request_data = {"data": {...}}
         >>> change_request = opengov_api.create_record_change_request("12345", change_request_data)
-        >>> print(change_request)
+        >>> print(change_request.data.id)
     """
     with _get_client() as client:
         url = build_url(
@@ -1673,13 +1766,18 @@ def create_record_change_request(
         )
         response = client.post(url, json=data)
         response.raise_for_status()
-        return parse_json_response(response)
+        data = parse_json_response(response)
+
+        return JSONAPIResponse[ChangeRequestResource](
+            data=ChangeRequestResource(**data["data"]),
+            included=data.get("included"),
+            links=Links(**data["links"]) if data.get("links") else None,
+            meta=Meta(**data["meta"]) if data.get("meta") else None,
+        )
 
 
 @handle_request_errors
-def cancel_record_change_request(
-    record_id: str, change_request_id: str
-) -> dict[str, Any]:
+def cancel_record_change_request(record_id: str, change_request_id: str) -> None:
     """
     Cancel a change request for a record.
 
@@ -1687,23 +1785,18 @@ def cancel_record_change_request(
         record_id: The ID of the record
         change_request_id: The ID of the change request to cancel
 
-    Returns:
-        Dictionary containing the response from the API
-
     Raises:
         OpenGovConfigurationError: If API key or community is not configured
         OpenGovAPIConnectionError: If connection fails
         OpenGovAPITimeoutError: If request times out
         OpenGovNotFoundError: If record or change request is not found (404)
         OpenGovAPIStatusError: If API returns an error status code
-        OpenGovResponseParseError: If response cannot be parsed as JSON
 
     Example:
         >>> import opengov_api
         >>> opengov_api.set_api_key("your-api-key")
         >>> opengov_api.set_community("your-community")
-        >>> result = opengov_api.cancel_record_change_request("12345", "cr-123")
-        >>> print(result)
+        >>> opengov_api.cancel_record_change_request("12345", "cr-123")
     """
     with _get_client() as client:
         url = build_url(
@@ -1713,7 +1806,6 @@ def cancel_record_change_request(
         )
         response = client.delete(url)
         response.raise_for_status()
-        return parse_json_response(response)
 
 
 # Record Workflow Steps endpoints
@@ -1782,7 +1874,9 @@ def list_record_workflow_steps(
 
 
 @handle_request_errors
-def create_record_workflow_step(record_id: str, data: dict[str, Any]) -> dict[str, Any]:
+def create_record_workflow_step(
+    record_id: str, data: dict[str, Any]
+) -> JSONAPIResponse[WorkflowStepResource]:
     """
     Create a workflow step for a record.
 
@@ -1791,7 +1885,7 @@ def create_record_workflow_step(record_id: str, data: dict[str, Any]) -> dict[st
         data: Dictionary containing the workflow step data
 
     Returns:
-        Dictionary containing the created workflow step data from the API
+        JSONAPIResponse containing the created WorkflowStepResource
 
     Raises:
         OpenGovConfigurationError: If API key or community is not configured
@@ -1806,8 +1900,8 @@ def create_record_workflow_step(record_id: str, data: dict[str, Any]) -> dict[st
         >>> opengov_api.set_api_key("your-api-key")
         >>> opengov_api.set_community("your-community")
         >>> step_data = {"data": {...}}
-        >>> step = opengov_api.create_record_workflow_step("12345", step_data)
-        >>> print(step)
+        >>> response = opengov_api.create_record_workflow_step("12345", step_data)
+        >>> print(response.data.attributes.name)
     """
     with _get_client() as client:
         url = build_url(
@@ -1815,11 +1909,20 @@ def create_record_workflow_step(record_id: str, data: dict[str, Any]) -> dict[st
         )
         response = client.post(url, json=data)
         response.raise_for_status()
-        return parse_json_response(response)
+        data = parse_json_response(response)
+
+        return JSONAPIResponse[WorkflowStepResource](
+            data=WorkflowStepResource(**data["data"]),
+            included=data.get("included"),
+            links=Links(**data["links"]) if data.get("links") else None,
+            meta=Meta(**data["meta"]) if data.get("meta") else None,
+        )
 
 
 @handle_request_errors
-def get_record_workflow_step(record_id: str, step_id: str) -> dict[str, Any]:
+def get_record_workflow_step(
+    record_id: str, step_id: str
+) -> JSONAPIResponse[WorkflowStepResource]:
     """
     Get a specific workflow step on a record.
 
@@ -1828,7 +1931,7 @@ def get_record_workflow_step(record_id: str, step_id: str) -> dict[str, Any]:
         step_id: The ID of the workflow step
 
     Returns:
-        Dictionary containing workflow step data from the API
+        JSONAPIResponse containing the WorkflowStepResource
 
     Raises:
         OpenGovConfigurationError: If API key or community is not configured
@@ -1842,8 +1945,8 @@ def get_record_workflow_step(record_id: str, step_id: str) -> dict[str, Any]:
         >>> import opengov_api
         >>> opengov_api.set_api_key("your-api-key")
         >>> opengov_api.set_community("your-community")
-        >>> step = opengov_api.get_record_workflow_step("12345", "step-123")
-        >>> print(step)
+        >>> response = opengov_api.get_record_workflow_step("12345", "step-123")
+        >>> print(response.data.attributes.name)
     """
     with _get_client() as client:
         url = build_url(
@@ -1853,13 +1956,20 @@ def get_record_workflow_step(record_id: str, step_id: str) -> dict[str, Any]:
         )
         response = client.get(url)
         response.raise_for_status()
-        return parse_json_response(response)
+        data = parse_json_response(response)
+
+        return JSONAPIResponse[WorkflowStepResource](
+            data=WorkflowStepResource(**data["data"]),
+            included=data.get("included"),
+            links=Links(**data["links"]) if data.get("links") else None,
+            meta=Meta(**data["meta"]) if data.get("meta") else None,
+        )
 
 
 @handle_request_errors
 def update_record_workflow_step(
     record_id: str, step_id: str, data: dict[str, Any]
-) -> dict[str, Any]:
+) -> JSONAPIResponse[WorkflowStepResource]:
     """
     Update a workflow step on a record.
 
@@ -1869,7 +1979,7 @@ def update_record_workflow_step(
         data: Dictionary containing the workflow step data to update
 
     Returns:
-        Dictionary containing the updated workflow step data from the API
+        JSONAPIResponse containing the updated WorkflowStepResource
 
     Raises:
         OpenGovConfigurationError: If API key or community is not configured
@@ -1884,8 +1994,8 @@ def update_record_workflow_step(
         >>> opengov_api.set_api_key("your-api-key")
         >>> opengov_api.set_community("your-community")
         >>> step_data = {"data": {...}}
-        >>> step = opengov_api.update_record_workflow_step("12345", "step-123", step_data)
-        >>> print(step)
+        >>> response = opengov_api.update_record_workflow_step("12345", "step-123", step_data)
+        >>> print(response.data.attributes.name)
     """
     with _get_client() as client:
         url = build_url(
@@ -1895,11 +2005,18 @@ def update_record_workflow_step(
         )
         response = client.patch(url, json=data)
         response.raise_for_status()
-        return parse_json_response(response)
+        data = parse_json_response(response)
+
+        return JSONAPIResponse[WorkflowStepResource](
+            data=WorkflowStepResource(**data["data"]),
+            included=data.get("included"),
+            links=Links(**data["links"]) if data.get("links") else None,
+            meta=Meta(**data["meta"]) if data.get("meta") else None,
+        )
 
 
 @handle_request_errors
-def delete_record_workflow_step(record_id: str, step_id: str) -> dict[str, Any]:
+def delete_record_workflow_step(record_id: str, step_id: str) -> None:
     """
     Delete a workflow step from a record.
 
@@ -1907,23 +2024,18 @@ def delete_record_workflow_step(record_id: str, step_id: str) -> dict[str, Any]:
         record_id: The ID of the record
         step_id: The ID of the workflow step to delete
 
-    Returns:
-        Dictionary containing the response from the API
-
     Raises:
         OpenGovConfigurationError: If API key or community is not configured
         OpenGovAPIConnectionError: If connection fails
         OpenGovAPITimeoutError: If request times out
         OpenGovNotFoundError: If record or step is not found (404)
         OpenGovAPIStatusError: If API returns an error status code
-        OpenGovResponseParseError: If response cannot be parsed as JSON
 
     Example:
         >>> import opengov_api
         >>> opengov_api.set_api_key("your-api-key")
         >>> opengov_api.set_community("your-community")
-        >>> result = opengov_api.delete_record_workflow_step("12345", "step-123")
-        >>> print(result)
+        >>> opengov_api.delete_record_workflow_step("12345", "step-123")
     """
     with _get_client() as client:
         url = build_url(
@@ -1933,7 +2045,6 @@ def delete_record_workflow_step(record_id: str, step_id: str) -> dict[str, Any]:
         )
         response = client.delete(url)
         response.raise_for_status()
-        return parse_json_response(response)
 
 
 # Record Workflow Step Comments endpoints
@@ -2008,7 +2119,7 @@ def list_record_workflow_step_comments(
 @handle_request_errors
 def create_record_workflow_step_comment(
     record_id: str, step_id: str, data: dict[str, Any]
-) -> dict[str, Any]:
+) -> JSONAPIResponse[WorkflowStepCommentResource]:
     """
     Create a comment on a workflow step.
 
@@ -2018,7 +2129,7 @@ def create_record_workflow_step_comment(
         data: Dictionary containing the comment data
 
     Returns:
-        Dictionary containing the created comment data from the API
+        JSONAPIResponse containing the created WorkflowStepCommentResource
 
     Raises:
         OpenGovConfigurationError: If API key or community is not configured
@@ -2033,8 +2144,8 @@ def create_record_workflow_step_comment(
         >>> opengov_api.set_api_key("your-api-key")
         >>> opengov_api.set_community("your-community")
         >>> comment_data = {"data": {...}}
-        >>> comment = opengov_api.create_record_workflow_step_comment("12345", "step-123", comment_data)
-        >>> print(comment)
+        >>> response = opengov_api.create_record_workflow_step_comment("12345", "step-123", comment_data)
+        >>> print(response.data.attributes.text)
     """
     with _get_client() as client:
         url = build_url(
@@ -2044,13 +2155,20 @@ def create_record_workflow_step_comment(
         )
         response = client.post(url, json=data)
         response.raise_for_status()
-        return parse_json_response(response)
+        data = parse_json_response(response)
+
+        return JSONAPIResponse[WorkflowStepCommentResource](
+            data=WorkflowStepCommentResource(**data["data"]),
+            included=data.get("included"),
+            links=Links(**data["links"]) if data.get("links") else None,
+            meta=Meta(**data["meta"]) if data.get("meta") else None,
+        )
 
 
 @handle_request_errors
 def get_record_workflow_step_comment(
     record_id: str, step_id: str, comment_id: str
-) -> dict[str, Any]:
+) -> JSONAPIResponse[WorkflowStepCommentResource]:
     """
     Get a specific comment on a workflow step.
 
@@ -2060,7 +2178,7 @@ def get_record_workflow_step_comment(
         comment_id: The ID of the comment
 
     Returns:
-        Dictionary containing comment data from the API
+        JSONAPIResponse containing the WorkflowStepCommentResource
 
     Raises:
         OpenGovConfigurationError: If API key or community is not configured
@@ -2074,8 +2192,8 @@ def get_record_workflow_step_comment(
         >>> import opengov_api
         >>> opengov_api.set_api_key("your-api-key")
         >>> opengov_api.set_community("your-community")
-        >>> comment = opengov_api.get_record_workflow_step_comment("12345", "step-123", "comment-123")
-        >>> print(comment)
+        >>> response = opengov_api.get_record_workflow_step_comment("12345", "step-123", "comment-123")
+        >>> print(response.data.attributes.text)
     """
     with _get_client() as client:
         url = build_url(
@@ -2085,13 +2203,20 @@ def get_record_workflow_step_comment(
         )
         response = client.get(url)
         response.raise_for_status()
-        return parse_json_response(response)
+        data = parse_json_response(response)
+
+        return JSONAPIResponse[WorkflowStepCommentResource](
+            data=WorkflowStepCommentResource(**data["data"]),
+            included=data.get("included"),
+            links=Links(**data["links"]) if data.get("links") else None,
+            meta=Meta(**data["meta"]) if data.get("meta") else None,
+        )
 
 
 @handle_request_errors
 def delete_record_workflow_step_comment(
     record_id: str, step_id: str, comment_id: str
-) -> dict[str, Any]:
+) -> None:
     """
     Delete a comment from a workflow step.
 
@@ -2100,23 +2225,18 @@ def delete_record_workflow_step_comment(
         step_id: The ID of the workflow step
         comment_id: The ID of the comment to delete
 
-    Returns:
-        Dictionary containing the response from the API
-
     Raises:
         OpenGovConfigurationError: If API key or community is not configured
         OpenGovAPIConnectionError: If connection fails
         OpenGovAPITimeoutError: If request times out
         OpenGovNotFoundError: If record, step, or comment is not found (404)
         OpenGovAPIStatusError: If API returns an error status code
-        OpenGovResponseParseError: If response cannot be parsed as JSON
 
     Example:
         >>> import opengov_api
         >>> opengov_api.set_api_key("your-api-key")
         >>> opengov_api.set_community("your-community")
-        >>> result = opengov_api.delete_record_workflow_step_comment("12345", "step-123", "comment-123")
-        >>> print(result)
+        >>> opengov_api.delete_record_workflow_step_comment("12345", "step-123", "comment-123")
     """
     with _get_client() as client:
         url = build_url(
@@ -2126,7 +2246,6 @@ def delete_record_workflow_step_comment(
         )
         response = client.delete(url)
         response.raise_for_status()
-        return parse_json_response(response)
 
 
 # Record Collections endpoints
@@ -2195,7 +2314,9 @@ def list_record_collections(
 
 
 @handle_request_errors
-def get_record_collection(record_id: str, collection_id: str) -> dict[str, Any]:
+def get_record_collection(
+    record_id: str, collection_id: str
+) -> JSONAPIResponse[CollectionResource]:
     """
     Get a specific collection on a record.
 
@@ -2204,7 +2325,7 @@ def get_record_collection(record_id: str, collection_id: str) -> dict[str, Any]:
         collection_id: The ID of the collection
 
     Returns:
-        Dictionary containing collection data from the API
+        JSONAPIResponse containing the CollectionResource
 
     Raises:
         OpenGovConfigurationError: If API key or community is not configured
@@ -2218,8 +2339,8 @@ def get_record_collection(record_id: str, collection_id: str) -> dict[str, Any]:
         >>> import opengov_api
         >>> opengov_api.set_api_key("your-api-key")
         >>> opengov_api.set_community("your-community")
-        >>> collection = opengov_api.get_record_collection("12345", "coll-123")
-        >>> print(collection)
+        >>> response = opengov_api.get_record_collection("12345", "coll-123")
+        >>> print(response.data.attributes.name)
     """
     with _get_client() as client:
         url = build_url(
@@ -2229,13 +2350,20 @@ def get_record_collection(record_id: str, collection_id: str) -> dict[str, Any]:
         )
         response = client.get(url)
         response.raise_for_status()
-        return parse_json_response(response)
+        data = parse_json_response(response)
+
+        return JSONAPIResponse[CollectionResource](
+            data=CollectionResource(**data["data"]),
+            included=data.get("included"),
+            links=Links(**data["links"]) if data.get("links") else None,
+            meta=Meta(**data["meta"]) if data.get("meta") else None,
+        )
 
 
 @handle_request_errors
 def create_record_collection_entry(
     record_id: str, collection_id: str, data: dict[str, Any]
-) -> dict[str, Any]:
+) -> JSONAPIResponse[CollectionEntryResource]:
     """
     Create an entry in a record collection.
 
@@ -2245,7 +2373,7 @@ def create_record_collection_entry(
         data: Dictionary containing the entry data
 
     Returns:
-        Dictionary containing the created entry data from the API
+        JSONAPIResponse containing the created entry data
 
     Raises:
         OpenGovConfigurationError: If API key or community is not configured
@@ -2261,7 +2389,7 @@ def create_record_collection_entry(
         >>> opengov_api.set_community("your-community")
         >>> entry_data = {"data": {...}}
         >>> entry = opengov_api.create_record_collection_entry("12345", "coll-123", entry_data)
-        >>> print(entry)
+        >>> print(entry.data.id)
     """
     with _get_client() as client:
         url = build_url(
@@ -2271,13 +2399,20 @@ def create_record_collection_entry(
         )
         response = client.post(url, json=data)
         response.raise_for_status()
-        return parse_json_response(response)
+        data = parse_json_response(response)
+
+        return JSONAPIResponse[CollectionEntryResource](
+            data=CollectionEntryResource(**data["data"]),
+            included=data.get("included"),
+            links=Links(**data["links"]) if data.get("links") else None,
+            meta=Meta(**data["meta"]) if data.get("meta") else None,
+        )
 
 
 @handle_request_errors
 def get_record_collection_entry(
     record_id: str, collection_id: str, entry_id: str
-) -> dict[str, Any]:
+) -> JSONAPIResponse[CollectionEntryResource]:
     """
     Get a specific entry in a record collection.
 
@@ -2287,7 +2422,7 @@ def get_record_collection_entry(
         entry_id: The ID of the entry
 
     Returns:
-        Dictionary containing entry data from the API
+        JSONAPIResponse containing entry data
 
     Raises:
         OpenGovConfigurationError: If API key or community is not configured
@@ -2302,7 +2437,7 @@ def get_record_collection_entry(
         >>> opengov_api.set_api_key("your-api-key")
         >>> opengov_api.set_community("your-community")
         >>> entry = opengov_api.get_record_collection_entry("12345", "coll-123", "entry-123")
-        >>> print(entry)
+        >>> print(entry.data.id)
     """
     with _get_client() as client:
         url = build_url(
@@ -2312,13 +2447,20 @@ def get_record_collection_entry(
         )
         response = client.get(url)
         response.raise_for_status()
-        return parse_json_response(response)
+        data = parse_json_response(response)
+
+        return JSONAPIResponse[CollectionEntryResource](
+            data=CollectionEntryResource(**data["data"]),
+            included=data.get("included"),
+            links=Links(**data["links"]) if data.get("links") else None,
+            meta=Meta(**data["meta"]) if data.get("meta") else None,
+        )
 
 
 @handle_request_errors
 def update_record_collection_entry(
     record_id: str, collection_id: str, entry_id: str, data: dict[str, Any]
-) -> dict[str, Any]:
+) -> JSONAPIResponse[CollectionEntryResource]:
     """
     Update an entry in a record collection.
 
@@ -2329,7 +2471,7 @@ def update_record_collection_entry(
         data: Dictionary containing the entry data to update
 
     Returns:
-        Dictionary containing the updated entry data from the API
+        JSONAPIResponse containing the updated entry data
 
     Raises:
         OpenGovConfigurationError: If API key or community is not configured
@@ -2345,7 +2487,7 @@ def update_record_collection_entry(
         >>> opengov_api.set_community("your-community")
         >>> entry_data = {"data": {...}}
         >>> entry = opengov_api.update_record_collection_entry("12345", "coll-123", "entry-123", entry_data)
-        >>> print(entry)
+        >>> print(entry.data.id)
     """
     with _get_client() as client:
         url = build_url(
@@ -2355,4 +2497,11 @@ def update_record_collection_entry(
         )
         response = client.patch(url, json=data)
         response.raise_for_status()
-        return parse_json_response(response)
+        data = parse_json_response(response)
+
+        return JSONAPIResponse[CollectionEntryResource](
+            data=CollectionEntryResource(**data["data"]),
+            included=data.get("included"),
+            links=Links(**data["links"]) if data.get("links") else None,
+            meta=Meta(**data["meta"]) if data.get("meta") else None,
+        )

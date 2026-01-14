@@ -8,26 +8,26 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-    
+
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
-      
+
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
         python-version: '3.14'
-        
+
     - name: Install uv
       uses: astral-sh/setup-uv@v5
       with:
         enable-cache: true
-        
+
     - name: Setup
       run: |
         uv sync
         uvx prek install
-      
+
     - name: Verify installation
       run: |
         echo "✓ Dependencies installed successfully"

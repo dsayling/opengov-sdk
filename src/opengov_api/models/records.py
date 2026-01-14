@@ -221,3 +221,77 @@ class CollectionResource(BaseModel):
     attributes: CollectionAttributes
     relationships: dict[str, Any] | None = None
     links: dict[str, str] | None = None
+
+
+# Form models
+class FormResource(BaseModel):
+    """Form resource object. Note: Forms use a non-standard API response format."""
+
+    fields: list[dict[str, Any]]
+
+
+# Applicant models
+class ApplicantAttributes(BaseModel):
+    """Applicant attributes."""
+
+    user_id: str | None = Field(None, alias="userID")
+    name: str | None = None
+    email: str | None = None
+    created_at: datetime | None = Field(None, alias="createdAt")
+
+    model_config = {"populate_by_name": True}
+
+
+class ApplicantResource(BaseModel):
+    """Applicant resource object."""
+
+    id: str
+    type: str
+    attributes: ApplicantAttributes
+    relationships: dict[str, Any] | None = None
+    links: dict[str, str] | None = None
+
+
+# Change Request models
+class ChangeRequestAttributes(BaseModel):
+    """Change request attributes."""
+
+    status: str | None = None
+    requested_by: str | None = Field(None, alias="requestedBy")
+    requested_at: datetime | None = Field(None, alias="requestedAt")
+    approved_by: str | None = Field(None, alias="approvedBy")
+    approved_at: datetime | None = Field(None, alias="approvedAt")
+    changes: dict[str, Any] | None = None
+
+    model_config = {"populate_by_name": True}
+
+
+class ChangeRequestResource(BaseModel):
+    """Change request resource object."""
+
+    id: str
+    type: str
+    attributes: ChangeRequestAttributes
+    relationships: dict[str, Any] | None = None
+    links: dict[str, str] | None = None
+
+
+# Collection Entry models
+class CollectionEntryAttributes(BaseModel):
+    """Collection entry attributes."""
+
+    data: dict[str, Any] | None = None
+    created_at: datetime | None = Field(None, alias="createdAt")
+    updated_at: datetime | None = Field(None, alias="updatedAt")
+
+    model_config = {"populate_by_name": True}
+
+
+class CollectionEntryResource(BaseModel):
+    """Collection entry resource object."""
+
+    id: str
+    type: str
+    attributes: CollectionEntryAttributes
+    relationships: dict[str, Any] | None = None
+    links: dict[str, str] | None = None
