@@ -4,8 +4,22 @@ Shared pytest fixtures and configuration for all tests.
 
 import pytest
 from pytest_httpx import HTTPXMock
+from unittest.mock import patch
 
 import opengov_api
+
+
+@pytest.fixture(autouse=True)
+def mock_sleep():
+    """
+    Automatically mock time.sleep to prevent actual sleeping during retries.
+
+    This fixture runs automatically for all tests to ensure tests run quickly
+    even when retry logic is triggered. Without this, tests with retries would
+    sleep for actual delays (1s, 2s, 4s, etc.).
+    """
+    with patch("time.sleep"):
+        yield
 
 
 @pytest.fixture(autouse=True)
@@ -112,18 +126,21 @@ def reset_config(test_base_url):
     test isolation and prevent state leakage.
     """
     from opengov_api import client
+    from opengov_api.client import RetryConfig
 
     # Store original values
     original_api_key = client._api_key
     original_base_url = client._base_url
     original_community = client._community
     original_timeout = client._timeout
+    original_retry_config = client._retry_config
 
     # Reset to None/defaults
     client._api_key = None
     client._base_url = test_base_url
     client._community = None
     client._timeout = 30.0
+    client._retry_config = RetryConfig()  # Reset to default
 
     yield
 
@@ -132,6 +149,7 @@ def reset_config(test_base_url):
     client._base_url = original_base_url
     client._community = original_community
     client._timeout = original_timeout
+    client._retry_config = original_retry_config
 
 
 @pytest.fixture

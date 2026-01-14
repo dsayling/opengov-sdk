@@ -7,14 +7,17 @@ import httpx
 import pytest
 
 from opengov_api.client import (
+    RetryConfig,
     set_api_key,
     set_base_url,
     set_community,
     set_timeout,
+    configure_retries,
     get_api_key,
     get_base_url,
     get_community,
     get_timeout,
+    get_retry_config,
     _get_client,
 )
 from opengov_api.exceptions import OpenGovConfigurationError
@@ -30,12 +33,14 @@ def reset_config():
     original_base_url = client._base_url
     original_community = client._community
     original_timeout = client._timeout
+    original_retry_config = client._retry_config
 
     # Reset to None/defaults
     client._api_key = None
     client._base_url = "https://api.plce.opengov.com/plce/v2"
     client._community = None
     client._timeout = 30.0
+    client._retry_config = RetryConfig()
 
     yield
 
@@ -44,6 +49,7 @@ def reset_config():
     client._base_url = original_base_url
     client._community = original_community
     client._timeout = original_timeout
+    client._retry_config = original_retry_config
 
 
 class TestConfiguration:
@@ -186,3 +192,72 @@ class TestGetClient:
         client2 = _get_client()
         assert client2.headers["Authorization"] == "Token second-key"
         client2.close()
+
+
+class TestRetryConfiguration:
+    """Tests for retry configuration."""
+
+    def test_default_retry_config(self):
+        """Test default retry configuration."""
+        config = get_retry_config()
+        assert config.max_retries == 3
+        assert config.initial_delay == 1.0
+        assert config.max_delay == 60.0
+        assert config.backoff_multiplier == 2.0
+        assert config.jitter_factor == 0.1
+
+    def test_configure_max_retries(self):
+        """Test configuring max retries."""
+        configure_retries(max_retries=5)
+        config = get_retry_config()
+        assert config.max_retries == 5
+        # Other settings unchanged
+        assert config.initial_delay == 1.0
+
+    def test_configure_initial_delay(self):
+        """Test configuring initial delay."""
+        configure_retries(initial_delay=2.5)
+        config = get_retry_config()
+        assert config.initial_delay == 2.5
+        # Other settings unchanged
+        assert config.max_retries == 3
+
+    def test_configure_max_delay(self):
+        """Test configuring max delay."""
+        configure_retries(max_delay=120.0)
+        config = get_retry_config()
+        assert config.max_delay == 120.0
+
+    def test_configure_backoff_multiplier(self):
+        """Test configuring backoff multiplier."""
+        configure_retries(backoff_multiplier=3.0)
+        config = get_retry_config()
+        assert config.backoff_multiplier == 3.0
+
+    def test_configure_jitter_factor(self):
+        """Test configuring jitter factor."""
+        configure_retries(jitter_factor=0.2)
+        config = get_retry_config()
+        assert config.jitter_factor == 0.2
+
+    def test_configure_multiple_settings(self):
+        """Test configuring multiple settings at once."""
+        configure_retries(
+            max_retries=10,
+            initial_delay=0.5,
+            max_delay=30.0,
+            backoff_multiplier=1.5,
+            jitter_factor=0.05,
+        )
+        config = get_retry_config()
+        assert config.max_retries == 10
+        assert config.initial_delay == 0.5
+        assert config.max_delay == 30.0
+        assert config.backoff_multiplier == 1.5
+        assert config.jitter_factor == 0.05
+
+    def test_disable_retries(self):
+        """Test disabling retries."""
+        configure_retries(max_retries=0)
+        config = get_retry_config()
+        assert config.max_retries == 0

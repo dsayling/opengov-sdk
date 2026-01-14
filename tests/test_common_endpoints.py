@@ -261,15 +261,26 @@ class TestListEndpoints:
         import re
 
         url = build_url(url_path)
-        httpx_mock.add_response(
-            url=re.compile(re.escape(url) + r"(\?.*)?$"),
-            status_code=status_code,
-            json={"message": "Error message"},
-        )
+
+        # For retryable errors (429, 500), we need to add response multiple times
+        # as they will be retried
+        is_retryable = status_code in [429, 500]
+        num_responses = 4 if is_retryable else 1  # Initial + 3 retries
+
+        for _ in range(num_responses):
+            httpx_mock.add_response(
+                url=re.compile(re.escape(url) + r"(\?.*)?$"),
+                status_code=status_code,
+                json={"message": "Error message"},
+            )
 
         with pytest.raises(exception_class) as exc_info:
             endpoint_func()
         assert exc_info.value.status_code == status_code
+
+        # For retryable errors, verify attempts were tracked
+        if is_retryable:
+            assert exc_info.value.attempts == 4  # Initial + 3 retries
 
 
 class TestGetEndpoints:
@@ -524,10 +535,21 @@ class TestGetEndpoints:
     ):
         """All get endpoints handle HTTP errors consistently."""
         url = build_url(url_path_template.format(resource_id))
-        httpx_mock.add_response(
-            url=url, status_code=status_code, json={"message": "Error message"}
-        )
+
+        # For retryable errors (429, 500), we need to add response multiple times
+        # as they will be retried
+        is_retryable = status_code in [429, 500]
+        num_responses = 4 if is_retryable else 1  # Initial + 3 retries
+
+        for _ in range(num_responses):
+            httpx_mock.add_response(
+                url=url, status_code=status_code, json={"message": "Error message"}
+            )
 
         with pytest.raises(exception_class) as exc_info:
             endpoint_func(resource_id)
         assert exc_info.value.status_code == status_code
+
+        # For retryable errors, verify attempts were tracked
+        if is_retryable:
+            assert exc_info.value.attempts == 4  # Initial + 3 retries
