@@ -5,17 +5,40 @@ Provides module-level configuration management and client factory.
 """
 
 import os
+from dataclasses import dataclass
 from typing import Optional
 
 import httpx
 
 from .exceptions import OpenGovConfigurationError
 
+
+@dataclass
+class RetryConfig:
+    """
+    Configuration for automatic retry with exponential backoff.
+
+    Attributes:
+        max_retries: Maximum number of retry attempts (default: 3)
+        initial_delay: Initial delay in seconds before first retry (default: 1.0)
+        max_delay: Maximum delay in seconds between retries (default: 60.0)
+        backoff_multiplier: Exponential backoff multiplier (default: 2.0)
+        jitter_factor: Random jitter as fraction of delay, 0-1 (default: 0.1 = 10%)
+    """
+
+    max_retries: int = 3
+    initial_delay: float = 1.0
+    max_delay: float = 60.0
+    backoff_multiplier: float = 2.0
+    jitter_factor: float = 0.1
+
+
 # Module-level configuration
 _api_key: Optional[str] = os.getenv("OPENGOV_API_KEY")
 _base_url: str = "https://api.plce.opengov.com/plce/v2"
 _community: Optional[str] = os.getenv("OPENGOV_COMMUNITY")
 _timeout: float = 30.0
+_retry_config: RetryConfig = RetryConfig()
 
 
 def set_api_key(key: str) -> None:
@@ -78,6 +101,54 @@ def set_timeout(timeout: float) -> None:
     _timeout = timeout
 
 
+def configure_retries(
+    max_retries: Optional[int] = None,
+    initial_delay: Optional[float] = None,
+    max_delay: Optional[float] = None,
+    backoff_multiplier: Optional[float] = None,
+    jitter_factor: Optional[float] = None,
+) -> None:
+    """
+    Configure automatic retry behavior for transient errors.
+
+    Retries are automatically applied to:
+    - 429 Rate Limit errors (respects Retry-After header)
+    - 500+ Server errors
+    - Timeout errors
+    - Connection/Network errors
+
+    Non-retryable errors (400, 401, 403, 404) fail immediately.
+
+    Args:
+        max_retries: Maximum number of retry attempts (default: 3)
+        initial_delay: Initial delay in seconds before first retry (default: 1.0)
+        max_delay: Maximum delay in seconds between retries (default: 60.0)
+        backoff_multiplier: Exponential backoff multiplier (default: 2.0)
+        jitter_factor: Random jitter as fraction of delay, 0-1 (default: 0.1)
+
+    Example:
+        >>> import opengov_api
+        >>> # Increase max retries and initial delay
+        >>> opengov_api.configure_retries(max_retries=5, initial_delay=2.0)
+        >>>
+        >>> # Disable retries
+        >>> opengov_api.configure_retries(max_retries=0)
+    """
+    global _retry_config
+
+    # Update only the specified fields
+    if max_retries is not None:
+        _retry_config.max_retries = max_retries
+    if initial_delay is not None:
+        _retry_config.initial_delay = initial_delay
+    if max_delay is not None:
+        _retry_config.max_delay = max_delay
+    if backoff_multiplier is not None:
+        _retry_config.backoff_multiplier = backoff_multiplier
+    if jitter_factor is not None:
+        _retry_config.jitter_factor = jitter_factor
+
+
 def get_api_key() -> str:
     """
     Get the current API key.
@@ -130,6 +201,16 @@ def get_timeout() -> float:
         The configured timeout in seconds
     """
     return _timeout
+
+
+def get_retry_config() -> RetryConfig:
+    """
+    Get the current retry configuration.
+
+    Returns:
+        The configured RetryConfig instance
+    """
+    return _retry_config
 
 
 def _get_client() -> httpx.Client:

@@ -55,9 +55,10 @@ class TestNetworkBlocking:
             f"Expected mock error, got: {exc_info.value}"
         )
 
-        # Verify no requests were matched (which is what we want - to catch unmocked requests)
-        assert len(httpx_mock._requests_not_matched) == 1, (
-            "Should have caught one unmocked request"
+        # With retries, we should see 4 requests (initial + 3 retries)
+        # because the httpx.TimeoutException is retryable
+        assert len(httpx_mock._requests_not_matched) == 4, (
+            f"Should have caught 4 requests (1 initial + 3 retries), got {len(httpx_mock._requests_not_matched)}"
         )
 
         # Clear the unmocked requests so teardown doesn't fail

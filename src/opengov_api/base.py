@@ -6,10 +6,13 @@ Provides:
 - Error handling and exception mapping
 - Response parsing with validation
 - Request execution wrapper
+- Automatic retry with exponential backoff for transient errors
 """
 
 import functools
 import json
+import random
+import time
 from typing import Any, Callable, ParamSpec, TypeVar
 
 import httpx
@@ -122,58 +125,166 @@ def parse_json_response(response: httpx.Response) -> dict[str, Any]:
         ) from e
 
 
+def _calculate_retry_delay(attempt: int, retry_after: float | None = None) -> float:
+    """
+    Calculate retry delay with exponential backoff and jitter.
+
+    Args:
+        attempt: Current retry attempt (0-indexed)
+        retry_after: Optional Retry-After header value in seconds
+
+    Returns:
+        Delay in seconds before next retry
+    """
+    from .client import get_retry_config
+
+    config = get_retry_config()
+
+    if retry_after is not None:
+        # Respect Retry-After header if provided
+        return min(retry_after, config.max_delay)
+
+    # Exponential backoff: delay = initial * (multiplier ^ attempt)
+    delay = config.initial_delay * (config.backoff_multiplier**attempt)
+    delay = min(delay, config.max_delay)
+
+    # Add random jitter to avoid thundering herd
+    jitter = delay * config.jitter_factor * (2 * random.random() - 1)
+    return delay + jitter
+
+
+def _is_retryable_error(
+    exception: Exception,
+) -> tuple[bool, float | None]:
+    """
+    Determine if an error is retryable and extract Retry-After if available.
+
+    Args:
+        exception: The exception to check
+
+    Returns:
+        Tuple of (is_retryable, retry_after_seconds)
+    """
+    # Timeout errors are retryable
+    if isinstance(exception, (httpx.TimeoutException, httpx.ConnectError)):
+        return (True, None)
+
+    # Network errors are retryable
+    if isinstance(exception, httpx.NetworkError):
+        return (True, None)
+
+    # HTTP status errors - check status code
+    if isinstance(exception, httpx.HTTPStatusError):
+        status_code = exception.response.status_code
+
+        # 429 Rate Limit - retryable, check Retry-After header
+        if status_code == 429:
+            retry_after = None
+            retry_after_header = exception.response.headers.get("retry-after")
+            if retry_after_header:
+                try:
+                    retry_after = float(retry_after_header)
+                except ValueError:
+                    pass  # Ignore if not a number
+            return (True, retry_after)
+
+        # 500+ Server Errors - retryable
+        if status_code >= 500:
+            return (True, None)
+
+    # Not retryable
+    return (False, None)
+
+
 def handle_request_errors(
     func: Callable[P, R],
 ) -> Callable[P, R]:
     """
-    Decorator to wrap httpx exceptions into custom exceptions.
+    Decorator to wrap httpx exceptions with automatic retry and exponential backoff.
+
+    Retries transient errors:
+    - 429 Rate Limit (respects Retry-After header)
+    - 500+ Server Errors
+    - Timeout errors
+    - Connection/network errors
+
+    Does NOT retry client errors (400, 401, 403, 404).
 
     Args:
         func: Function to wrap
 
     Returns:
-        Wrapped function with error handling
+        Wrapped function with error handling and retry logic
     """
 
     @functools.wraps(func)
     def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
-        try:
-            return func(*args, **kwargs)
-        except httpx.TimeoutException as e:
-            # Try to get request, but it may not be set
-            request = None
+        from .client import get_retry_config
+
+        config = get_retry_config()
+        last_exception: Exception | None = None
+        attempt = 0
+
+        while attempt <= config.max_retries:
             try:
-                request = e.request
-            except (RuntimeError, AttributeError):
-                pass
-            raise OpenGovAPITimeoutError(
-                f"Request timed out: {e}",
-                request=request,
-            ) from e
-        except httpx.ConnectError as e:
-            # Try to get request, but it may not be set
-            request = None
-            try:
-                request = e.request
-            except (RuntimeError, AttributeError):
-                pass
-            raise OpenGovAPIConnectionError(
-                f"Connection failed: {e}",
-                request=request,
-            ) from e
-        except httpx.NetworkError as e:
-            # Try to get request, but it may not be set
-            request = None
-            try:
-                request = e.request
-            except (RuntimeError, AttributeError):
-                pass
-            raise OpenGovAPIConnectionError(
-                f"Network error: {e}",
-                request=request,
-            ) from e
-        except httpx.HTTPStatusError as e:
-            # Map to custom status error
-            raise make_status_error(e.response) from e
+                return func(*args, **kwargs)
+            except Exception as e:
+                last_exception = e
+                is_retryable, retry_after = _is_retryable_error(e)
+
+                # If not retryable or out of retries, convert and raise
+                if not is_retryable or attempt >= config.max_retries:
+                    # Convert to custom exceptions
+                    if isinstance(e, httpx.TimeoutException):
+                        request = None
+                        try:
+                            request = e.request
+                        except (RuntimeError, AttributeError):
+                            pass
+                        raise OpenGovAPITimeoutError(
+                            f"Request timed out after {attempt} attempts: {e}",
+                            request=request,
+                            attempts=attempt + 1,
+                        ) from e
+                    elif isinstance(e, httpx.ConnectError):
+                        request = None
+                        try:
+                            request = e.request
+                        except (RuntimeError, AttributeError):
+                            pass
+                        raise OpenGovAPIConnectionError(
+                            f"Connection failed after {attempt} attempts: {e}",
+                            request=request,
+                            attempts=attempt + 1,
+                        ) from e
+                    elif isinstance(e, httpx.NetworkError):
+                        request = None
+                        try:
+                            request = e.request
+                        except (RuntimeError, AttributeError):
+                            pass
+                        raise OpenGovAPIConnectionError(
+                            f"Network error after {attempt} attempts: {e}",
+                            request=request,
+                            attempts=attempt + 1,
+                        ) from e
+                    elif isinstance(e, httpx.HTTPStatusError):
+                        # Create status error with attempt count
+                        status_error = make_status_error(e.response)
+                        status_error.attempts = attempt + 1
+                        raise status_error from e
+                    else:
+                        # Unknown exception, re-raise
+                        raise
+
+                # Calculate delay and retry
+                delay = _calculate_retry_delay(attempt, retry_after)
+                attempt += 1
+                time.sleep(delay)
+
+        # Should never reach here, but just in case
+        if last_exception:
+            raise last_exception
+        raise RuntimeError("Unexpected error in retry loop")
 
     return wrapper

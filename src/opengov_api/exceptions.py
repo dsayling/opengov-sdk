@@ -30,9 +30,16 @@ class OpenGovConfigurationError(OpenGovAPIError):
 class OpenGovAPIConnectionError(OpenGovAPIError):
     """Network/connection failures."""
 
-    def __init__(self, message: str, *, request: httpx.Request | None = None) -> None:
+    def __init__(
+        self,
+        message: str,
+        *,
+        request: httpx.Request | None = None,
+        attempts: int = 1,
+    ) -> None:
         super().__init__(message)
         self.request = request
+        self.attempts = attempts
 
 
 class OpenGovAPITimeoutError(OpenGovAPIConnectionError):
@@ -71,6 +78,7 @@ class OpenGovAPIStatusError(OpenGovAPIError):
         self.status_code = response.status_code
         self.request_id = response.headers.get("x-request-id")
         self.body = body
+        self.attempts = 1  # Default to 1, can be overridden by retry logic
 
     def __repr__(self) -> str:
         return (
