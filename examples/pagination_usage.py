@@ -5,8 +5,9 @@ This demonstrates how to use the SDK with typed parameters and responses.
 """
 
 import opengov_api
-from opengov_api.models import RecordStatus, DateRangeFilter
+from opengov_api.models import RecordStatus, DateRangeFilter, RecordResource
 from datetime import date
+from typing import cast
 
 # Configure the SDK
 opengov_api.set_api_key("your-api-key")
@@ -21,11 +22,10 @@ response = opengov_api.list_records(
 
 print(f"Page {response.current_page()} of {response.total_pages()}")
 print(f"Total records: {response.total_records()}")
-if isinstance(response.data, list):
-    print(f"Records on this page: {len(response.data)}")
+print(f"Records on this page: {len(response.data)}")
 
-    for record in response.data:
-        print(f"  - {record.attributes.name} ({record.attributes.number})")
+for record in cast(list[RecordResource], response.data):
+    print(f"  - {record.attributes.name} ({record.attributes.number})")
 
 # Example 2: Date range filtering
 print("\nExample 2: Records created after March 1, 2025")
@@ -35,9 +35,8 @@ response = opengov_api.list_records(
     status=RecordStatus.ACTIVE,
 )
 
-if isinstance(response.data, list):
-    for record in response.data:
-        print(f"  - {record.attributes.name} created {record.attributes.created_at}")
+for record in cast(list[RecordResource], response.data):
+    print(f"  - {record.attributes.name} created {record.attributes.created_at}")
 
 # Example 3: Complex date range (Q1 2025)
 print("\nExample 3: Records from Q1 2025")
@@ -104,10 +103,9 @@ response = opengov_api.list_records(
     page_size=10,
 )
 
-if isinstance(response.data, list):
-    for record in response.data:
-        # Only name, number, and status will be in attributes
-        print(f"  - {record.attributes.name}: {record.attributes.number}")
+for record in cast(list[RecordResource], response.data):
+    # Only name, number, and status will be in attributes
+    print(f"  - {record.attributes.name}: {record.attributes.number}")
 
 # Included resources are available in response.included
 if response.included:

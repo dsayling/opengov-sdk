@@ -5,7 +5,7 @@ Provides reusable CRUD operations and pagination helpers that can be used
 across all resource modules (records, users, locations, projects, etc.).
 """
 
-from typing import Any, Callable, Iterator, TypeVar
+from typing import Any, Callable, Generator, TypeVar, cast
 
 from .base import build_url, parse_json_response
 from .client import _get_client, get_base_url, get_community
@@ -178,7 +178,7 @@ def list_resources(
 def iter_paginated(
     list_func: Callable[..., JSONAPIResponse[list[T]]],
     **kwargs: Any,
-) -> Iterator[T]:
+) -> Generator[T, None, None]:
     """
     Iterate through all pages of a paginated list endpoint.
 
@@ -205,12 +205,11 @@ def iter_paginated(
     while True:
         response = list_func(page_number=page, page_size=page_size, **kwargs)
 
-        # Handle both single resources and lists
-        if isinstance(response.data, list):
-            for item in response.data:
-                yield item
-        else:
-            yield response.data
+        # list_func returns JSONAPIResponse[list[T]], so data is always a list
+        # Cast to list[T] since JSONAPIResponse.data is typed as T | list[T]
+        data = cast(list[T], response.data)
+        for item in data:
+            yield item
 
         # Check if there are more pages
         if not response.has_next_page():
