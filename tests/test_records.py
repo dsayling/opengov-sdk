@@ -21,12 +21,19 @@ class TestRecordsEdgeCases:
         record_id = "rec-123-abc"
         httpx_mock.add_response(
             url=build_url(f"testcommunity/records/{record_id}"),
-            json={"id": record_id, "name": "Special Record"},
+            json={
+                "data": {
+                    "id": record_id,
+                    "type": "records",
+                    "attributes": {"name": "Special Record"},
+                }
+            },
         )
 
         result = opengov_api.get_record(record_id)
-        assert result["id"] == record_id
-        assert result["name"] == "Special Record"
+        assert not isinstance(result.data, list)
+        assert result.data.id == record_id
+        assert result.data.attributes.name == "Special Record"
 
 
 class TestRecordCRUD:
@@ -38,10 +45,16 @@ class TestRecordCRUD:
         """Test creating a record."""
         url = build_url("testcommunity/records")
         record_data = {"data": {"type": "records", "attributes": {"name": "Test"}}}
-        httpx_mock.add_response(url=url, json={"data": {"id": "123"}})
+        httpx_mock.add_response(
+            url=url,
+            json={
+                "data": {"id": "123", "type": "records", "attributes": {"name": "Test"}}
+            },
+        )
 
         result = opengov_api.create_record(record_data)
-        assert result["data"]["id"] == "123"
+        assert not isinstance(result.data, list)
+        assert result.data.id == "123"
         assert_request_method("POST")
 
     def test_update_record(
@@ -50,10 +63,20 @@ class TestRecordCRUD:
         """Test updating a record."""
         url = build_url("testcommunity/records/123")
         record_data = {"data": {"type": "records", "attributes": {"name": "Updated"}}}
-        httpx_mock.add_response(url=url, json={"data": {"id": "123"}})
+        httpx_mock.add_response(
+            url=url,
+            json={
+                "data": {
+                    "id": "123",
+                    "type": "records",
+                    "attributes": {"name": "Updated"},
+                }
+            },
+        )
 
         result = opengov_api.update_record("123", record_data)
-        assert result["data"]["id"] == "123"
+        assert not isinstance(result.data, list)
+        assert result.data.id == "123"
         assert_request_method("PATCH")
 
     def test_archive_record(
@@ -63,7 +86,8 @@ class TestRecordCRUD:
         url = build_url("testcommunity/records/123")
         httpx_mock.add_response(url=url, json={})
 
-        opengov_api.archive_record("123")
+        result = opengov_api.archive_record("123")
+        assert result is None
         assert_request_method("DELETE")
 
 
@@ -76,7 +100,7 @@ class TestRecordForm:
         httpx_mock.add_response(url=url, json={"data": {"fields": []}})
 
         result = opengov_api.get_record_form("123")
-        assert "data" in result
+        assert result.fields == []
 
     def test_update_record_form(
         self, httpx_mock: HTTPXMock, configure_client, build_url
@@ -87,7 +111,7 @@ class TestRecordForm:
         httpx_mock.add_response(url=url, json={"data": {"fields": []}})
 
         result = opengov_api.update_record_form("123", form_data)
-        assert "data" in result
+        assert result.fields == []
 
         request = httpx_mock.get_request()
         assert request is not None
@@ -102,10 +126,14 @@ class TestRecordApplicant:
     ):
         """Test getting record applicant."""
         url = build_url("testcommunity/records/123/applicant")
-        httpx_mock.add_response(url=url, json={"data": {"id": "user-1"}})
+        httpx_mock.add_response(
+            url=url,
+            json={"data": {"id": "user-1", "type": "applicants", "attributes": {}}},
+        )
 
         result = opengov_api.get_record_applicant("123")
-        assert result["data"]["id"] == "user-1"
+        assert not isinstance(result.data, list)
+        assert result.data.id == "user-1"
 
     def test_update_record_applicant(
         self, httpx_mock: HTTPXMock, configure_client, build_url
@@ -113,10 +141,14 @@ class TestRecordApplicant:
         """Test updating record applicant."""
         url = build_url("testcommunity/records/123/applicant")
         applicant_data = {"data": {"id": "user-1"}}
-        httpx_mock.add_response(url=url, json={"data": {"id": "user-1"}})
+        httpx_mock.add_response(
+            url=url,
+            json={"data": {"id": "user-1", "type": "applicants", "attributes": {}}},
+        )
 
         result = opengov_api.update_record_applicant("123", applicant_data)
-        assert result["data"]["id"] == "user-1"
+        assert not isinstance(result.data, list)
+        assert result.data.id == "user-1"
 
     def test_remove_record_applicant(
         self, httpx_mock: HTTPXMock, configure_client, build_url
@@ -125,7 +157,8 @@ class TestRecordApplicant:
         url = build_url("testcommunity/records/123/applicant")
         httpx_mock.add_response(url=url, json={})
 
-        opengov_api.remove_record_applicant("123")
+        result = opengov_api.remove_record_applicant("123")
+        assert result is None
 
         request = httpx_mock.get_request()
         assert request is not None
@@ -152,18 +185,38 @@ class TestRecordGuests:
         """Test adding a record guest."""
         url = build_url("testcommunity/records/123/guests")
         guest_data = {"data": {"id": "user-1"}}
-        httpx_mock.add_response(url=url, json={"data": {"id": "user-1"}})
+        httpx_mock.add_response(
+            url=url,
+            json={
+                "data": {
+                    "id": "user-1",
+                    "type": "guests",
+                    "attributes": {"name": "Test User"},
+                }
+            },
+        )
 
         result = opengov_api.add_record_guest("123", guest_data)
-        assert result["data"]["id"] == "user-1"
+        assert not isinstance(result.data, list)
+        assert result.data.id == "user-1"
 
     def test_get_record_guest(self, httpx_mock: HTTPXMock, configure_client, build_url):
         """Test getting a specific record guest."""
         url = build_url("testcommunity/records/123/guests/user-1")
-        httpx_mock.add_response(url=url, json={"data": {"id": "user-1"}})
+        httpx_mock.add_response(
+            url=url,
+            json={
+                "data": {
+                    "id": "user-1",
+                    "type": "guests",
+                    "attributes": {"name": "Test User"},
+                }
+            },
+        )
 
         result = opengov_api.get_record_guest("123", "user-1")
-        assert result["data"]["id"] == "user-1"
+        assert not isinstance(result.data, list)
+        assert result.data.id == "user-1"
 
     def test_remove_record_guest(
         self, httpx_mock: HTTPXMock, configure_client, build_url
@@ -172,7 +225,8 @@ class TestRecordGuests:
         url = build_url("testcommunity/records/123/guests/user-1")
         httpx_mock.add_response(url=url, json={})
 
-        opengov_api.remove_record_guest("123", "user-1")
+        result = opengov_api.remove_record_guest("123", "user-1")
+        assert result is None
 
         request = httpx_mock.get_request()
         assert request is not None
@@ -187,10 +241,20 @@ class TestRecordLocations:
     ):
         """Test getting record primary location."""
         url = build_url("testcommunity/records/123/primary-location")
-        httpx_mock.add_response(url=url, json={"data": {"id": "loc-1"}})
+        httpx_mock.add_response(
+            url=url,
+            json={
+                "data": {
+                    "id": "loc-1",
+                    "type": "locations",
+                    "attributes": {"address": "123 Main St"},
+                }
+            },
+        )
 
         result = opengov_api.get_record_primary_location("123")
-        assert result["data"]["id"] == "loc-1"
+        assert not isinstance(result.data, list)
+        assert result.data.id == "loc-1"
 
     def test_update_record_primary_location(
         self, httpx_mock: HTTPXMock, configure_client, build_url
@@ -198,10 +262,20 @@ class TestRecordLocations:
         """Test updating record primary location."""
         url = build_url("testcommunity/records/123/primary-location")
         location_data = {"data": {"id": "loc-1"}}
-        httpx_mock.add_response(url=url, json={"data": {"id": "loc-1"}})
+        httpx_mock.add_response(
+            url=url,
+            json={
+                "data": {
+                    "id": "loc-1",
+                    "type": "locations",
+                    "attributes": {"address": "123 Main St"},
+                }
+            },
+        )
 
         result = opengov_api.update_record_primary_location("123", location_data)
-        assert result["data"]["id"] == "loc-1"
+        assert not isinstance(result.data, list)
+        assert result.data.id == "loc-1"
 
     def test_remove_record_primary_location(
         self, httpx_mock: HTTPXMock, configure_client, build_url
@@ -210,7 +284,8 @@ class TestRecordLocations:
         url = build_url("testcommunity/records/123/primary-location")
         httpx_mock.add_response(url=url, json={})
 
-        opengov_api.remove_record_primary_location("123")
+        result = opengov_api.remove_record_primary_location("123")
+        assert result is None
 
         request = httpx_mock.get_request()
         assert request is not None
@@ -237,20 +312,40 @@ class TestRecordLocations:
         """Test adding an additional location to a record."""
         url = build_url("testcommunity/records/123/additional-locations")
         location_data = {"data": {"id": "loc-1"}}
-        httpx_mock.add_response(url=url, json={"data": {"id": "loc-1"}})
+        httpx_mock.add_response(
+            url=url,
+            json={
+                "data": {
+                    "id": "loc-1",
+                    "type": "locations",
+                    "attributes": {"address": "456 Oak Ave"},
+                }
+            },
+        )
 
         result = opengov_api.add_record_additional_location("123", location_data)
-        assert result["data"]["id"] == "loc-1"
+        assert not isinstance(result.data, list)
+        assert result.data.id == "loc-1"
 
     def test_get_record_additional_location(
         self, httpx_mock: HTTPXMock, configure_client, build_url
     ):
         """Test getting a specific additional location on a record."""
         url = build_url("testcommunity/records/123/additional-locations/loc-1")
-        httpx_mock.add_response(url=url, json={"data": {"id": "loc-1"}})
+        httpx_mock.add_response(
+            url=url,
+            json={
+                "data": {
+                    "id": "loc-1",
+                    "type": "locations",
+                    "attributes": {"address": "456 Oak Ave"},
+                }
+            },
+        )
 
         result = opengov_api.get_record_additional_location("123", "loc-1")
-        assert result["data"]["id"] == "loc-1"
+        assert not isinstance(result.data, list)
+        assert result.data.id == "loc-1"
 
     def test_remove_record_additional_location(
         self, httpx_mock: HTTPXMock, configure_client, build_url
@@ -259,7 +354,8 @@ class TestRecordLocations:
         url = build_url("testcommunity/records/123/additional-locations/loc-1")
         httpx_mock.add_response(url=url, json={})
 
-        opengov_api.remove_record_additional_location("123", "loc-1")
+        result = opengov_api.remove_record_additional_location("123", "loc-1")
+        assert result is None
 
         request = httpx_mock.get_request()
         assert request is not None
@@ -290,20 +386,40 @@ class TestRecordAttachments:
         """Test adding a record attachment."""
         url = build_url("testcommunity/records/123/attachments")
         attachment_data = {"data": {"id": "att-1"}}
-        httpx_mock.add_response(url=url, json={"data": {"id": "att-1"}})
+        httpx_mock.add_response(
+            url=url,
+            json={
+                "data": {
+                    "id": "att-1",
+                    "type": "attachments",
+                    "attributes": {"filename": "test.pdf"},
+                }
+            },
+        )
 
         result = opengov_api.add_record_attachment("123", attachment_data)
-        assert result["data"]["id"] == "att-1"
+        assert not isinstance(result.data, list)
+        assert result.data.id == "att-1"
 
     def test_get_record_attachment(
         self, httpx_mock: HTTPXMock, configure_client, build_url
     ):
         """Test getting a specific record attachment."""
         url = build_url("testcommunity/records/123/attachments/att-1")
-        httpx_mock.add_response(url=url, json={"data": {"id": "att-1"}})
+        httpx_mock.add_response(
+            url=url,
+            json={
+                "data": {
+                    "id": "att-1",
+                    "type": "attachments",
+                    "attributes": {"filename": "test.pdf"},
+                }
+            },
+        )
 
         result = opengov_api.get_record_attachment("123", "att-1")
-        assert result["data"]["id"] == "att-1"
+        assert not isinstance(result.data, list)
+        assert result.data.id == "att-1"
 
     def test_remove_record_attachment(
         self, httpx_mock: HTTPXMock, configure_client, build_url
@@ -312,7 +428,8 @@ class TestRecordAttachments:
         url = build_url("testcommunity/records/123/attachments/att-1")
         httpx_mock.add_response(url=url, json={})
 
-        opengov_api.remove_record_attachment("123", "att-1")
+        result = opengov_api.remove_record_attachment("123", "att-1")
+        assert result is None
 
         request = httpx_mock.get_request()
         assert request is not None
@@ -327,20 +444,28 @@ class TestRecordChangeRequests:
     ):
         """Test getting a specific change request."""
         url = build_url("testcommunity/records/123/change-requests/cr-1")
-        httpx_mock.add_response(url=url, json={"data": {"id": "cr-1"}})
+        httpx_mock.add_response(
+            url=url,
+            json={"data": {"id": "cr-1", "type": "change-requests", "attributes": {}}},
+        )
 
         result = opengov_api.get_record_change_request("123", "cr-1")
-        assert result["data"]["id"] == "cr-1"
+        assert not isinstance(result.data, list)
+        assert result.data.id == "cr-1"
 
     def test_get_most_recent_record_change_request(
         self, httpx_mock: HTTPXMock, configure_client, build_url
     ):
         """Test getting the most recent change request."""
         url = build_url("testcommunity/records/123/change-requests")
-        httpx_mock.add_response(url=url, json={"data": {"id": "cr-1"}})
+        httpx_mock.add_response(
+            url=url,
+            json={"data": {"id": "cr-1", "type": "change-requests", "attributes": {}}},
+        )
 
         result = opengov_api.get_most_recent_record_change_request("123")
-        assert result["data"]["id"] == "cr-1"
+        assert not isinstance(result.data, list)
+        assert result.data.id == "cr-1"
 
     def test_create_record_change_request(
         self, httpx_mock: HTTPXMock, configure_client, build_url
@@ -348,10 +473,14 @@ class TestRecordChangeRequests:
         """Test creating a change request."""
         url = build_url("testcommunity/records/123/change-requests")
         change_request_data = {"data": {"attributes": {"reason": "Updates needed"}}}
-        httpx_mock.add_response(url=url, json={"data": {"id": "cr-1"}})
+        httpx_mock.add_response(
+            url=url,
+            json={"data": {"id": "cr-1", "type": "change-requests", "attributes": {}}},
+        )
 
         result = opengov_api.create_record_change_request("123", change_request_data)
-        assert result["data"]["id"] == "cr-1"
+        assert not isinstance(result.data, list)
+        assert result.data.id == "cr-1"
 
     def test_cancel_record_change_request(
         self, httpx_mock: HTTPXMock, configure_client, build_url
@@ -360,7 +489,8 @@ class TestRecordChangeRequests:
         url = build_url("testcommunity/records/123/change-requests/cr-1")
         httpx_mock.add_response(url=url, json={})
 
-        opengov_api.cancel_record_change_request("123", "cr-1")
+        result = opengov_api.cancel_record_change_request("123", "cr-1")
+        assert result is None
 
         request = httpx_mock.get_request()
         assert request is not None
@@ -391,20 +521,40 @@ class TestRecordWorkflowSteps:
         """Test creating a workflow step."""
         url = build_url("testcommunity/records/123/workflow-steps")
         step_data = {"data": {"type": "workflow-step"}}
-        httpx_mock.add_response(url=url, json={"data": {"id": "step-1"}})
+        httpx_mock.add_response(
+            url=url,
+            json={
+                "data": {
+                    "id": "step-1",
+                    "type": "workflow-steps",
+                    "attributes": {"name": "Review"},
+                }
+            },
+        )
 
         result = opengov_api.create_record_workflow_step("123", step_data)
-        assert result["data"]["id"] == "step-1"
+        assert not isinstance(result.data, list)
+        assert result.data.id == "step-1"
 
     def test_get_record_workflow_step(
         self, httpx_mock: HTTPXMock, configure_client, build_url
     ):
         """Test getting a specific workflow step."""
         url = build_url("testcommunity/records/123/workflow-steps/step-1")
-        httpx_mock.add_response(url=url, json={"data": {"id": "step-1"}})
+        httpx_mock.add_response(
+            url=url,
+            json={
+                "data": {
+                    "id": "step-1",
+                    "type": "workflow-steps",
+                    "attributes": {"name": "Review"},
+                }
+            },
+        )
 
         result = opengov_api.get_record_workflow_step("123", "step-1")
-        assert result["data"]["id"] == "step-1"
+        assert not isinstance(result.data, list)
+        assert result.data.id == "step-1"
 
     def test_update_record_workflow_step(
         self, httpx_mock: HTTPXMock, configure_client, build_url
@@ -412,10 +562,20 @@ class TestRecordWorkflowSteps:
         """Test updating a workflow step."""
         url = build_url("testcommunity/records/123/workflow-steps/step-1")
         step_data = {"data": {"attributes": {"status": "completed"}}}
-        httpx_mock.add_response(url=url, json={"data": {"id": "step-1"}})
+        httpx_mock.add_response(
+            url=url,
+            json={
+                "data": {
+                    "id": "step-1",
+                    "type": "workflow-steps",
+                    "attributes": {"status": "completed"},
+                }
+            },
+        )
 
         result = opengov_api.update_record_workflow_step("123", "step-1", step_data)
-        assert result["data"]["id"] == "step-1"
+        assert not isinstance(result.data, list)
+        assert result.data.id == "step-1"
 
     def test_delete_record_workflow_step(
         self, httpx_mock: HTTPXMock, configure_client, build_url
@@ -424,7 +584,8 @@ class TestRecordWorkflowSteps:
         url = build_url("testcommunity/records/123/workflow-steps/step-1")
         httpx_mock.add_response(url=url, json={})
 
-        opengov_api.delete_record_workflow_step("123", "step-1")
+        result = opengov_api.delete_record_workflow_step("123", "step-1")
+        assert result is None
 
         request = httpx_mock.get_request()
         assert request is not None
@@ -455,12 +616,22 @@ class TestRecordWorkflowStepComments:
         """Test creating a workflow step comment."""
         url = build_url("testcommunity/records/123/workflow-steps/step-1/comments")
         comment_data = {"data": {"attributes": {"text": "Test comment"}}}
-        httpx_mock.add_response(url=url, json={"data": {"id": "comment-1"}})
+        httpx_mock.add_response(
+            url=url,
+            json={
+                "data": {
+                    "id": "comment-1",
+                    "type": "comments",
+                    "attributes": {"text": "Test comment"},
+                }
+            },
+        )
 
         result = opengov_api.create_record_workflow_step_comment(
             "123", "step-1", comment_data
         )
-        assert result["data"]["id"] == "comment-1"
+        assert not isinstance(result.data, list)
+        assert result.data.id == "comment-1"
 
     def test_get_record_workflow_step_comment(
         self, httpx_mock: HTTPXMock, configure_client, build_url
@@ -469,12 +640,22 @@ class TestRecordWorkflowStepComments:
         url = build_url(
             "testcommunity/records/123/workflow-steps/step-1/comments/comment-1"
         )
-        httpx_mock.add_response(url=url, json={"data": {"id": "comment-1"}})
+        httpx_mock.add_response(
+            url=url,
+            json={
+                "data": {
+                    "id": "comment-1",
+                    "type": "comments",
+                    "attributes": {"text": "Test comment"},
+                }
+            },
+        )
 
         result = opengov_api.get_record_workflow_step_comment(
             "123", "step-1", "comment-1"
         )
-        assert result["data"]["id"] == "comment-1"
+        assert not isinstance(result.data, list)
+        assert result.data.id == "comment-1"
 
     def test_delete_record_workflow_step_comment(
         self, httpx_mock: HTTPXMock, configure_client, build_url
@@ -485,7 +666,10 @@ class TestRecordWorkflowStepComments:
         )
         httpx_mock.add_response(url=url, json={})
 
-        opengov_api.delete_record_workflow_step_comment("123", "step-1", "comment-1")
+        result = opengov_api.delete_record_workflow_step_comment(
+            "123", "step-1", "comment-1"
+        )
+        assert result is None
 
         request = httpx_mock.get_request()
         assert request is not None
@@ -515,10 +699,20 @@ class TestRecordCollections:
     ):
         """Test getting a specific collection."""
         url = build_url("testcommunity/records/123/collections/coll-1")
-        httpx_mock.add_response(url=url, json={"data": {"id": "coll-1"}})
+        httpx_mock.add_response(
+            url=url,
+            json={
+                "data": {
+                    "id": "coll-1",
+                    "type": "collections",
+                    "attributes": {"name": "Test Collection"},
+                }
+            },
+        )
 
         result = opengov_api.get_record_collection("123", "coll-1")
-        assert result["data"]["id"] == "coll-1"
+        assert not isinstance(result.data, list)
+        assert result.data.id == "coll-1"
 
     def test_create_record_collection_entry(
         self, httpx_mock: HTTPXMock, configure_client, build_url
@@ -526,20 +720,40 @@ class TestRecordCollections:
         """Test creating a collection entry."""
         url = build_url("testcommunity/records/123/collections/coll-1")
         entry_data = {"data": {"attributes": {"value": "test"}}}
-        httpx_mock.add_response(url=url, json={"data": {"id": "entry-1"}})
+        httpx_mock.add_response(
+            url=url,
+            json={
+                "data": {
+                    "id": "entry-1",
+                    "type": "collection-entries",
+                    "attributes": {},
+                }
+            },
+        )
 
         result = opengov_api.create_record_collection_entry("123", "coll-1", entry_data)
-        assert result["data"]["id"] == "entry-1"
+        assert not isinstance(result.data, list)
+        assert result.data.id == "entry-1"
 
     def test_get_record_collection_entry(
         self, httpx_mock: HTTPXMock, configure_client, build_url
     ):
         """Test getting a specific collection entry."""
         url = build_url("testcommunity/records/123/collections/coll-1/entries/entry-1")
-        httpx_mock.add_response(url=url, json={"data": {"id": "entry-1"}})
+        httpx_mock.add_response(
+            url=url,
+            json={
+                "data": {
+                    "id": "entry-1",
+                    "type": "collection-entries",
+                    "attributes": {},
+                }
+            },
+        )
 
         result = opengov_api.get_record_collection_entry("123", "coll-1", "entry-1")
-        assert result["data"]["id"] == "entry-1"
+        assert not isinstance(result.data, list)
+        assert result.data.id == "entry-1"
 
     def test_update_record_collection_entry(
         self, httpx_mock: HTTPXMock, configure_client, build_url
@@ -547,9 +761,19 @@ class TestRecordCollections:
         """Test updating a collection entry."""
         url = build_url("testcommunity/records/123/collections/coll-1/entries/entry-1")
         entry_data = {"data": {"attributes": {"value": "updated"}}}
-        httpx_mock.add_response(url=url, json={"data": {"id": "entry-1"}})
+        httpx_mock.add_response(
+            url=url,
+            json={
+                "data": {
+                    "id": "entry-1",
+                    "type": "collection-entries",
+                    "attributes": {},
+                }
+            },
+        )
 
         result = opengov_api.update_record_collection_entry(
             "123", "coll-1", "entry-1", entry_data
         )
-        assert result["data"]["id"] == "entry-1"
+        assert not isinstance(result.data, list)
+        assert result.data.id == "entry-1"

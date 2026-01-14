@@ -31,10 +31,17 @@ from .params import (
     PageParams,
 )
 from .records import (
+    ApplicantAttributes,
+    ApplicantResource,
     AttachmentAttributes,
     AttachmentResource,
+    ChangeRequestAttributes,
+    ChangeRequestResource,
     CollectionAttributes,
+    CollectionEntryAttributes,
+    CollectionEntryResource,
     CollectionResource,
+    FormResource,
     GuestAttributes,
     GuestResource,
     LocationAttributes,
@@ -94,6 +101,8 @@ __all__ = [
     "RecordUpdateData",
     "RecordUpdateRequest",
     # Nested resources
+    "ApplicantAttributes",
+    "ApplicantResource",
     "GuestAttributes",
     "GuestResource",
     "LocationAttributes",
@@ -106,6 +115,11 @@ __all__ = [
     "WorkflowStepCommentResource",
     "CollectionAttributes",
     "CollectionResource",
+    "CollectionEntryAttributes",
+    "CollectionEntryResource",
+    "ChangeRequestAttributes",
+    "ChangeRequestResource",
+    "FormResource",
     # Record Types
     "RecordTypeAttributes",
     "RecordTypeResource",
