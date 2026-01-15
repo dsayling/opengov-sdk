@@ -16,10 +16,16 @@ Generate SDK endpoints from OpenAPI specifications following project conventions
 ## Workflow
 
 1. **Read the OpenAPI spec** at the provided file path
-2. **Identify endpoints** to implement from the spec
-3. **Check existing code** to understand current patterns and avoid duplicates
-4. **Generate code** following patterns in [references/patterns.md](references/patterns.md)
-5. **Run tests and type checks** to verify
+2. **Extract attribute schemas** - Use the schema extraction guide in [references/schema-extraction.md](references/schema-extraction.md) to:
+   - Locate the schema in the OpenAPI spec for each resource
+   - Extract using jq command or Python script
+   - Document all fields in a mapping table
+   - Verify field types, required/optional status, and nullable flags
+   - Verify field mappings before generating code
+3. **Identify endpoints** to implement from the spec
+4. **Check existing code** to understand current patterns and avoid duplicates
+5. **Generate code** following patterns in [references/patterns.md](references/patterns.md)
+6. **Run tests and type checks** to verify
 
 ## Quick Reference
 
@@ -72,14 +78,30 @@ See [references/patterns.md](references/patterns.md) for complete code examples 
 
 Before completing, verify:
 
+**Schema Extraction & Validation:**
+- [ ] Schema extracted using jq/Python from OpenAPI spec (not inferred from memory)
+- [ ] All OpenAPI fields documented in mapping table
+- [ ] Field types match OpenAPI spec exactly (string/integer/number/boolean/array/object)
+- [ ] Required vs optional status matches spec (check `required` array)
+- [ ] Nullable fields handled correctly (`nullable: true` → `| None`)
+- [ ] All camelCase fields have proper `Field(alias=...)` with exact casing
+- [ ] Field validators added only when needed (empty string → None, type coercion)
+- [ ] No extra fields beyond spec (unless intentionally added for SDK convenience)
+
+**Code Generation:**
 - [ ] All endpoint functions have `@handle_request_errors` decorator
 - [ ] All functions use `with _get_client() as client:` pattern
 - [ ] List endpoints return `JSONAPIResponse[{Resource}Resource]`
 - [ ] Response models use `Field(alias="camelCase")` for JSON field mapping
 - [ ] Params model has `to_query_params()` method
+- [ ] `model_config = {"populate_by_name": True}` present in all attribute models
+
+**Integration:**
 - [ ] Functions exported in `__init__.py`
 - [ ] Models exported in `models/__init__.py`
 - [ ] Tests created in `tests/test_{resource}.py`
 - [ ] List/Get endpoints added to `test_common_endpoints.py` parametrized lists
+
+**Verification:**
 - [ ] `uv run pytest` passes
 - [ ] `uv run pyright` passes

@@ -55,3 +55,10 @@ class DocumentType(str, Enum):
     LETTER = "Letter"
     CERTIFICATE = "Certificate"
     OTHER = "Other"
+
+
+class ChangeRequestStatus(str, Enum):
+    """Change request status enum."""
+
+    OPEN = "Open"
+    COMPLETE = "Complete"
