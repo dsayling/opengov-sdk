@@ -15,6 +15,18 @@ import opengov_api
 from opengov_api.models import DateRangeFilter, DocumentStepStatus
 
 
+def make_document_step_attrs(**kwargs):
+    """Helper to create valid DocumentStepAttributes with required fields."""
+    base = {
+        "label": "Test Step",
+        "stepType": "DOCUMENT",
+        "status": "COMPLETE",
+        "documentType": "Permit/License",
+    }
+    base.update(kwargs)
+    return base
+
+
 class TestDocumentStepsFiltering:
     """Tests for document steps filtering functionality."""
 
@@ -30,10 +42,9 @@ class TestDocumentStepsFiltering:
                     {
                         "id": "doc-step-1",
                         "type": "documentStep",
-                        "attributes": {
-                            "label": "Generate Certificate",
-                            "status": "COMPLETE",
-                        },
+                        "attributes": make_document_step_attrs(
+                            label="Generate Certificate", status="COMPLETE"
+                        ),
                     }
                 ],
                 "links": {
@@ -69,7 +80,9 @@ class TestDocumentStepsFiltering:
                     {
                         "id": "doc-step-1",
                         "type": "documentStep",
-                        "attributes": {"label": "Active Step", "status": "ACTIVE"},
+                        "attributes": make_document_step_attrs(
+                            label="Active Step", status="ACTIVE"
+                        ),
                     }
                 ],
                 "links": {
@@ -104,10 +117,9 @@ class TestDocumentStepsFiltering:
                     {
                         "id": "doc-step-1",
                         "type": "documentStep",
-                        "attributes": {
-                            "label": "Building Permit",
-                            "status": "COMPLETE",
-                        },
+                        "attributes": make_document_step_attrs(
+                            label="Building Permit", status="COMPLETE"
+                        ),
                     }
                 ],
                 "links": {
@@ -142,11 +154,11 @@ class TestDocumentStepsFiltering:
                     {
                         "id": "doc-step-1",
                         "type": "documentStep",
-                        "attributes": {
-                            "label": "Certificate",
-                            "status": "COMPLETE",
-                            "completedAt": "2025-03-15T10:00:00Z",
-                        },
+                        "attributes": make_document_step_attrs(
+                            label="Certificate",
+                            status="COMPLETE",
+                            completedAt="2025-03-15T10:00:00Z",
+                        ),
                     }
                 ],
                 "links": {
@@ -181,11 +193,11 @@ class TestDocumentStepsFiltering:
                     {
                         "id": "doc-step-1",
                         "type": "documentStep",
-                        "attributes": {
-                            "label": "Recent Document",
-                            "status": "COMPLETE",
-                            "activatedAt": "2025-03-10T10:00:00Z",
-                        },
+                        "attributes": make_document_step_attrs(
+                            label="Recent Document",
+                            status="COMPLETE",
+                            activatedAt="2025-03-10T10:00:00Z",
+                        ),
                     }
                 ],
                 "links": {
@@ -227,10 +239,9 @@ class TestDocumentStepsFiltering:
                     {
                         "id": "doc-step-1",
                         "type": "documentStep",
-                        "attributes": {
-                            "label": "Certificate",
-                            "status": "COMPLETE",
-                        },
+                        "attributes": make_document_step_attrs(
+                            label="Certificate", status="COMPLETE"
+                        ),
                     }
                 ],
                 "links": {
@@ -278,7 +289,9 @@ class TestDocumentStepsPagination:
                     {
                         "id": f"doc-step-{i}",
                         "type": "documentStep",
-                        "attributes": {"label": f"Step {i}", "status": "COMPLETE"},
+                        "attributes": make_document_step_attrs(
+                            label=f"Step {i}", status="COMPLETE"
+                        ),
                     }
                     for i in range(1, 6)
                 ],
@@ -327,7 +340,9 @@ class TestIterDocumentSteps:
                     {
                         "id": f"doc-step-{i}",
                         "type": "documentStep",
-                        "attributes": {"label": f"Step {i}", "status": "COMPLETE"},
+                        "attributes": make_document_step_attrs(
+                            label=f"Step {i}", status="COMPLETE"
+                        ),
                     }
                     for i in range(1, 4)
                 ],
@@ -358,7 +373,9 @@ class TestIterDocumentSteps:
                     {
                         "id": f"doc-step-{i}",
                         "type": "documentStep",
-                        "attributes": {"label": f"Step {i}", "status": "ACTIVE"},
+                        "attributes": make_document_step_attrs(
+                            label=f"Step {i}", status="ACTIVE"
+                        ),
                     }
                     for i in range(1, 3)
                 ],
@@ -379,7 +396,9 @@ class TestIterDocumentSteps:
                     {
                         "id": f"doc-step-{i}",
                         "type": "documentStep",
-                        "attributes": {"label": f"Step {i}", "status": "ACTIVE"},
+                        "attributes": make_document_step_attrs(
+                            label=f"Step {i}", status="ACTIVE"
+                        ),
                     }
                     for i in range(3, 5)
                 ],
@@ -414,7 +433,9 @@ class TestIterDocumentSteps:
                     {
                         "id": "doc-step-1",
                         "type": "documentStep",
-                        "attributes": {"label": "Active Step", "status": "ACTIVE"},
+                        "attributes": make_document_step_attrs(
+                            label="Active Step", status="ACTIVE"
+                        ),
                     }
                 ],
                 "links": {
@@ -478,7 +499,7 @@ class TestDocumentStepsEdgeCases:
             json={
                 "id": document_step_id,
                 "type": "documentStep",
-                "attributes": {"label": "Special Document"},
+                "attributes": make_document_step_attrs(label="Special Document"),
             },
         )
 
@@ -498,11 +519,11 @@ class TestDocumentStepsEdgeCases:
                     {
                         "id": "doc-step-1",
                         "type": "documentStep",
-                        "attributes": {
-                            "label": "Recent",
-                            "status": "COMPLETE",
-                            "completedAt": "2025-03-15T14:30:00Z",
-                        },
+                        "attributes": make_document_step_attrs(
+                            label="Recent",
+                            status="COMPLETE",
+                            completedAt="2025-03-15T14:30:00Z",
+                        ),
                     }
                 ],
                 "links": {

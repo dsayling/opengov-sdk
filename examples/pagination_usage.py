@@ -25,7 +25,7 @@ if isinstance(response.data, list):
     print(f"Records on this page: {len(response.data)}")
 
     for record in response.data:
-        print(f"  - {record.attributes.name} ({record.attributes.number})")
+        print(f"  - {record.attributes.number} ({record.attributes.number})")
 
 # Example 2: Date range filtering
 print("\nExample 2: Records created after March 1, 2025")
@@ -37,7 +37,7 @@ response = opengov_api.list_records(
 
 if isinstance(response.data, list):
     for record in response.data:
-        print(f"  - {record.attributes.name} created {record.attributes.created_at}")
+        print(f"  - {record.attributes.number} created {record.attributes.created_at}")
 
 # Example 3: Complex date range (Q1 2025)
 print("\nExample 3: Records from Q1 2025")
@@ -75,7 +75,7 @@ print("=" * 50)
 count = 0
 for record in opengov_api.iter_records(status=RecordStatus.ACTIVE, is_enabled=True):
     count += 1
-    print(f"  Processing record {count}: {record.attributes.name}")
+    print(f"  Processing record {count}: {record.attributes.number}")
     if count >= 5:  # Just show first 5 for demo
         print("  ... (and more)")
         break
@@ -107,7 +107,7 @@ response = opengov_api.list_records(
 if isinstance(response.data, list):
     for record in response.data:
         # Only name, number, and status will be in attributes
-        print(f"  - {record.attributes.name}: {record.attributes.number}")
+        print(f"  - {record.attributes.number}: {record.attributes.number}")
 
 # Included resources are available in response.included
 if response.included:

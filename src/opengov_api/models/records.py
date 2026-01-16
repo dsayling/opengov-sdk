@@ -2,28 +2,30 @@
 
 from datetime import datetime
 from typing import Any
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
-from .enums import RecordStatus
+from .enums import ChangeRequestStatus, RecordStatus, WorkflowStepStatus
 
 
 class RecordAttributes(BaseModel):
     """Record attributes."""
 
-    name: str | None = None
     number: str | None = None
-    status: RecordStatus | None = None
     hist_id: str | None = Field(None, alias="histID")
     hist_number: str | None = Field(None, alias="histNumber")
-    description: str | None = None
+    type_description: str | None = Field(None, alias="typeDescription")
+    status: RecordStatus | None = None
     is_enabled: bool | None = Field(None, alias="isEnabled")
-    created_at: datetime | None = Field(None, alias="createdAt")
-    updated_at: datetime | None = Field(None, alias="updatedAt")
     submitted_at: datetime | None = Field(None, alias="submittedAt")
     expires_at: datetime | None = Field(None, alias="expiresAt")
-    renewal_submitted: bool | None = Field(None, alias="renewalSubmitted")
+    renewal_of_record_id: str | None = Field(None, alias="renewalOfRecordID")
+    renewal_number: float | None = Field(None, alias="renewalNumber")
     submitted_online: bool | None = Field(None, alias="submittedOnline")
-    renewal_number: str | None = Field(None, alias="renewalNumber")
+    renewal_submitted: bool | None = Field(None, alias="renewalSubmitted")
+    created_at: datetime | None = Field(None, alias="createdAt")
+    updated_at: datetime | None = Field(None, alias="updatedAt")
+    created_by: str | None = Field(None, alias="createdBy")
+    updated_by: str | None = Field(None, alias="updatedBy")
 
     model_config = {"populate_by_name": True}
 
@@ -86,10 +88,15 @@ class RecordUpdateRequest(BaseModel):
 class GuestAttributes(BaseModel):
     """Guest attributes."""
 
+    first_name: str | None = Field(None, alias="firstName")
+    last_name: str | None = Field(None, alias="lastName")
     email: str | None = None
-    name: str | None = None
-    user_id: str | None = Field(None, alias="userID")
-    created_at: datetime | None = Field(None, alias="createdAt")
+    phone_no: str | None = Field(None, alias="phoneNo")
+    address: str | None = None
+    address_2: str | None = Field(None, alias="address2")
+    city: str | None = None
+    state: str | None = None
+    zip_code: str | None = Field(None, alias="zip")
 
     model_config = {"populate_by_name": True}
 
@@ -108,14 +115,48 @@ class GuestResource(BaseModel):
 class LocationAttributes(BaseModel):
     """Location attributes."""
 
-    address: str | None = None
-    city: str | None = None
-    state: str | None = None
-    zip_code: str | None = Field(None, alias="zipCode")
+    name: str | None = None
     latitude: float | None = None
     longitude: float | None = None
-    created_at: datetime | None = Field(None, alias="createdAt")
+    location_type: str | None = Field(None, alias="locationType")
+    owner_name: str | None = Field(None, alias="ownerName")
+    owner_street_number: str | None = Field(None, alias="ownerStreetNumber")
+    owner_street_name: str | None = Field(None, alias="ownerStreetName")
+    owner_unit: str | None = Field(None, alias="ownerUnit")
+    owner_city: str | None = Field(None, alias="ownerCity")
+    owner_state: str | None = Field(None, alias="ownerState")
+    owner_postal_code: str | None = Field(None, alias="ownerPostalCode")
+    owner_country: str | None = Field(None, alias="ownerCountry")
+    owner_phone_no: str | None = Field(None, alias="ownerPhoneNo")
+    owner_email: str | None = Field(None, alias="ownerEmail")
+    street_no: str | None = Field(None, alias="streetNo")
+    street_name: str | None = Field(None, alias="streetName")
+    unit: str | None = None
+    city: str | None = None
+    state: str | None = None
+    postal_code: str | None = Field(None, alias="postalCode")
+    country: str | None = None
+    secondary_latitude: float | None = Field(None, alias="secondaryLatitude")
+    secondary_longitude: float | None = Field(None, alias="secondaryLongitude")
+    segment_primary_label: str | None = Field(None, alias="segmentPrimaryLabel")
+    segment_secondary_label: str | None = Field(None, alias="segmentSecondaryLabel")
+    segment_label: str | None = Field(None, alias="segmentLabel")
+    segment_length: float | None = Field(None, alias="segmentLength")
+    lot_area: float | None = Field(None, alias="lotArea")
+    mat_id: str | None = Field(None, alias="matID")
+    mbl: str | None = None
+    occupancy_type: str | None = Field(None, alias="occupancyType")
+    property_use: str | None = Field(None, alias="propertyUse")
+    sewage: str | None = None
+    water: str | None = None
+    year_built: float | None = Field(None, alias="yearBuilt")
+    zoning: str | None = None
+    building_type: str | None = Field(None, alias="buildingType")
+    notes: str | None = None
+    subdivision: str | None = None
+    archived: bool | None = None
     updated_at: datetime | None = Field(None, alias="updatedAt")
+    gis_id: str | None = Field(None, alias="gisID")
 
     model_config = {"populate_by_name": True}
 
@@ -132,14 +173,19 @@ class LocationResource(BaseModel):
 
 # Attachment models
 class AttachmentAttributes(BaseModel):
-    """Attachment attributes."""
+    """Record attachment attributes."""
 
-    filename: str | None = None
-    content_type: str | None = Field(None, alias="contentType")
-    size: int | None = None
+    name: str | None = None
+    description: str | None = None
+    attachment_template_id: str | None = Field(None, alias="attachmentTemplateID")
+    record_id: str | None = Field(None, alias="recordID")
+    required: bool | None = None
+    order_number: float | None = Field(None, alias="orderNumber")
     url: str | None = None
     created_at: datetime | None = Field(None, alias="createdAt")
+    updated_at: datetime | None = Field(None, alias="updatedAt")
     created_by: str | None = Field(None, alias="createdBy")
+    updated_by: str | None = Field(None, alias="updatedBy")
 
     model_config = {"populate_by_name": True}
 
@@ -158,16 +204,22 @@ class AttachmentResource(BaseModel):
 class WorkflowStepAttributes(BaseModel):
     """Workflow step attributes."""
 
-    name: str | None = None
-    status: str | None = None
-    step_type: str | None = Field(None, alias="stepType")
-    assigned_to: str | None = Field(None, alias="assignedTo")
-    due_date: datetime | None = Field(None, alias="dueDate")
+    label: str
+    step_type: str = Field(..., alias="stepType")
+    ordinal: int | None = None
+    sequence: bool | None = None
+    status: WorkflowStepStatus
+    activated_at: datetime | None = Field(None, alias="activatedAt")
     completed_at: datetime | None = Field(None, alias="completedAt")
-    created_at: datetime | None = Field(None, alias="createdAt")
-    updated_at: datetime | None = Field(None, alias="updatedAt")
 
     model_config = {"populate_by_name": True}
+
+    @field_validator("activated_at", "completed_at", mode="before")
+    @classmethod
+    def set_empty_datetime_to_none(cls, v):
+        if v == "":
+            return None
+        return v
 
 
 class WorkflowStepResource(BaseModel):
@@ -184,7 +236,8 @@ class WorkflowStepResource(BaseModel):
 class WorkflowStepCommentAttributes(BaseModel):
     """Workflow step comment attributes."""
 
-    text: str | None = None
+    comment_type: str | None = Field(None, alias="commentType")
+    comment: str | None = None
     created_by: str | None = Field(None, alias="createdBy")
     created_at: datetime | None = Field(None, alias="createdAt")
 
@@ -205,10 +258,8 @@ class WorkflowStepCommentResource(BaseModel):
 class CollectionAttributes(BaseModel):
     """Collection attributes."""
 
-    name: str | None = None
-    collection_type: str | None = Field(None, alias="collectionType")
-    created_at: datetime | None = Field(None, alias="createdAt")
-    updated_at: datetime | None = Field(None, alias="updatedAt")
+    label: str | None = None
+    ordinal: int | None = None
 
     model_config = {"populate_by_name": True}
 
@@ -234,10 +285,8 @@ class FormResource(BaseModel):
 class ApplicantAttributes(BaseModel):
     """Applicant attributes."""
 
-    user_id: str | None = Field(None, alias="userID")
-    name: str | None = None
-    email: str | None = None
-    created_at: datetime | None = Field(None, alias="createdAt")
+    first_name: str | None = Field(None, alias="firstName")
+    last_name: str | None = Field(None, alias="lastName")
 
     model_config = {"populate_by_name": True}
 
@@ -256,12 +305,15 @@ class ApplicantResource(BaseModel):
 class ChangeRequestAttributes(BaseModel):
     """Change request attributes."""
 
-    status: str | None = None
+    overall_note: str | None = Field(None, alias="overallNote")
+    version: str | None = None
     requested_by: str | None = Field(None, alias="requestedBy")
-    requested_at: datetime | None = Field(None, alias="requestedAt")
-    approved_by: str | None = Field(None, alias="approvedBy")
-    approved_at: datetime | None = Field(None, alias="approvedAt")
-    changes: dict[str, Any] | None = None
+    responded_by: str | None = Field(None, alias="respondedBy")
+    status: ChangeRequestStatus | None = None
+    created_at: datetime | None = Field(None, alias="createdAt")
+    completed_at: datetime | None = Field(None, alias="completedAt")
+    form_fields: list[dict[str, Any]] | None = Field(None, alias="formFields")
+    attachments: list[dict[str, Any]] | None = None
 
     model_config = {"populate_by_name": True}
 
@@ -280,9 +332,7 @@ class ChangeRequestResource(BaseModel):
 class CollectionEntryAttributes(BaseModel):
     """Collection entry attributes."""
 
-    data: dict[str, Any] | None = None
-    created_at: datetime | None = Field(None, alias="createdAt")
-    updated_at: datetime | None = Field(None, alias="updatedAt")
+    fields: list[dict[str, Any]] | None = None
 
     model_config = {"populate_by_name": True}
 

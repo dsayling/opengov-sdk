@@ -14,6 +14,7 @@ import json
 import random
 import time
 from typing import Any, Callable, ParamSpec, TypeVar
+import logging
 
 import httpx
 
@@ -34,6 +35,8 @@ from .exceptions import (
 # Type variables for preserving function signatures in decorators
 P = ParamSpec("P")
 R = TypeVar("R")
+
+_log = logging.getLogger(__name__)
 
 
 def build_url(base_url: str, community: str, endpoint: str) -> str:
@@ -116,7 +119,9 @@ def parse_json_response(response: httpx.Response) -> dict[str, Any]:
         OpenGovResponseParseError: If JSON parsing fails
     """
     try:
-        return response.json()
+        resp = response.json()
+        _log.debug(f"Parsed JSON response: {resp}")
+        return resp
     except json.JSONDecodeError as e:
         raise OpenGovResponseParseError(
             f"Failed to parse JSON response: {e}",
