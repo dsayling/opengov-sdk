@@ -4,6 +4,7 @@ Client factory and configuration for OpenGov API SDK.
 Provides module-level configuration management and client factory.
 """
 
+import logging
 import os
 from dataclasses import dataclass
 from typing import Optional
@@ -11,6 +12,9 @@ from typing import Optional
 import httpx
 
 from .exceptions import OpenGovConfigurationError
+from .log_config import sanitize_api_key
+
+_log = logging.getLogger(__name__)
 
 
 @dataclass
@@ -54,6 +58,7 @@ def set_api_key(key: str) -> None:
     """
     global _api_key
     _api_key = key
+    _log.info(f"API key configured: {sanitize_api_key(key)}")
 
 
 def set_base_url(url: str) -> None:
@@ -69,6 +74,7 @@ def set_base_url(url: str) -> None:
     """
     global _base_url
     _base_url = url.rstrip("/")
+    _log.info(f"Base URL configured: {_base_url}")
 
 
 def set_community(community: str) -> None:
@@ -84,6 +90,7 @@ def set_community(community: str) -> None:
     """
     global _community
     _community = community
+    _log.info(f"Community configured: {_community}")
 
 
 def set_timeout(timeout: float) -> None:
@@ -99,6 +106,7 @@ def set_timeout(timeout: float) -> None:
     """
     global _timeout
     _timeout = timeout
+    _log.info(f"Timeout configured: {_timeout}s")
 
 
 def configure_retries(
@@ -147,6 +155,12 @@ def configure_retries(
         _retry_config.backoff_multiplier = backoff_multiplier
     if jitter_factor is not None:
         _retry_config.jitter_factor = jitter_factor
+
+    _log.info(
+        f"Retry config updated: max_retries={_retry_config.max_retries}, "
+        f"initial_delay={_retry_config.initial_delay}s, "
+        f"max_delay={_retry_config.max_delay}s"
+    )
 
 
 def get_api_key() -> str:
@@ -224,6 +238,10 @@ def _get_client() -> httpx.Client:
         OpenGovConfigurationError: If API key is not configured
     """
     api_key = get_api_key()  # This will raise if not configured
+
+    _log.debug(
+        f"Creating HTTP client: auth={sanitize_api_key(api_key)}, timeout={_timeout}s"
+    )
 
     return httpx.Client(
         headers={

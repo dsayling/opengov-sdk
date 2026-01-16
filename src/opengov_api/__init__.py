@@ -25,6 +25,7 @@ from .client import (
     get_timeout,
     get_retry_config,
 )
+from .log_config import enable_logging
 
 # Models
 from .models import (
@@ -177,6 +178,7 @@ __all__ = [
     "get_community",
     "get_timeout",
     "get_retry_config",
+    "enable_logging",
     # Models
     "DateRangeFilter",
     "DocumentStepResource",

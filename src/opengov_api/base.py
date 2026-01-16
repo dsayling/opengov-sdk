@@ -31,6 +31,7 @@ from .exceptions import (
     OpenGovRateLimitError,
     OpenGovResponseParseError,
 )
+from .log_config import sanitize_dict
 
 # Type variables for preserving function signatures in decorators
 P = ParamSpec("P")
@@ -53,7 +54,9 @@ def build_url(base_url: str, community: str, endpoint: str) -> str:
     """
     base_url = base_url.rstrip("/")
     endpoint = endpoint.lstrip("/")
-    return f"{base_url}/{community}/{endpoint}"
+    url = f"{base_url}/{community}/{endpoint}"
+    _log.debug(f"Built URL: {url}")
+    return url
 
 
 def make_status_error(response: httpx.Response) -> OpenGovAPIStatusError:
@@ -67,6 +70,7 @@ def make_status_error(response: httpx.Response) -> OpenGovAPIStatusError:
         Appropriate OpenGovAPIStatusError subclass
     """
     status_code = response.status_code
+    request_id = response.headers.get("x-request-id", "N/A")
 
     # Try to parse error body
     body: dict[str, Any] | str | None = None
@@ -102,6 +106,23 @@ def make_status_error(response: httpx.Response) -> OpenGovAPIStatusError:
     elif status_code >= 500:
         error_class = OpenGovInternalServerError
 
+    # Log error details
+    # Safely get URL (may not be available in mocked responses)
+    try:
+        url = str(response.url)
+    except (RuntimeError, AttributeError):
+        url = "N/A"
+
+    _log.error(
+        f"HTTP {status_code} error: {error_message} (request_id: {request_id}, "
+        f"url: {url})"
+    )
+    # Log error body at debug level
+    if isinstance(body, dict):
+        _log.debug(f"Error response body: {sanitize_dict(body)}")
+    elif body:
+        _log.debug(f"Error response body: {body[:500]}")  # Truncate long text
+
     return error_class(error_message, response=response, body=body)
 
 
@@ -120,9 +141,12 @@ def parse_json_response(response: httpx.Response) -> dict[str, Any]:
     """
     try:
         resp = response.json()
-        _log.debug(f"Parsed JSON response: {resp}")
+        # Log sanitized response body at DEBUG level only
+        sanitized_resp = sanitize_dict(resp) if isinstance(resp, dict) else resp
+        _log.debug(f"Response body: {sanitized_resp}")
         return resp
     except json.JSONDecodeError as e:
+        _log.error(f"Failed to parse JSON response: {e}")
         raise OpenGovResponseParseError(
             f"Failed to parse JSON response: {e}",
             response=response,
@@ -237,8 +261,19 @@ def handle_request_errors(
                 last_exception = e
                 is_retryable, retry_after = _is_retryable_error(e)
 
+                # Determine error type for logging
+                error_type = type(e).__name__
+
                 # If not retryable or out of retries, convert and raise
                 if not is_retryable or attempt >= config.max_retries:
+                    if not is_retryable:
+                        _log.debug(f"Non-retryable error: {error_type}: {e}")
+                    else:
+                        _log.error(
+                            f"Request failed after {attempt + 1} attempts: "
+                            f"{error_type}: {e}"
+                        )
+
                     # Convert to custom exceptions
                     if isinstance(e, httpx.TimeoutException):
                         request = None
@@ -285,6 +320,17 @@ def handle_request_errors(
                 # Calculate delay and retry
                 delay = _calculate_retry_delay(attempt, retry_after)
                 attempt += 1
+
+                # Log retry attempt
+                retry_msg = (
+                    f"Retrying request (attempt {attempt}/{config.max_retries + 1}): "
+                    f"{error_type}"
+                )
+                if retry_after is not None:
+                    retry_msg += f" (Retry-After: {retry_after}s)"
+                _log.warning(retry_msg)
+                _log.debug(f"Waiting {delay:.2f}s before retry")
+
                 time.sleep(delay)
 
         # Should never reach here, but just in case
