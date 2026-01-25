@@ -43,6 +43,7 @@ jobs:
 
   integration-test:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     permissions:
       contents: read
 
@@ -82,4 +83,5 @@ jobs:
         done
 
     - name: Run integration tests
-      run: uv run pytest tests/integration -v --tb=short
+      run: uv run pytest tests/integration -v --tb=short --timeout=15
+      timeout-minutes: 10
