@@ -6,11 +6,14 @@ Provides module-level configuration management and client factory.
 
 import os
 from dataclasses import dataclass
-from typing import Optional
+from typing import Literal, Optional
 
 import httpx
 
 from .exceptions import OpenGovConfigurationError
+
+# Type for authentication scheme
+AuthScheme = Literal["token", "bearer"]
 
 
 @dataclass
@@ -39,6 +42,7 @@ _base_url: str = "https://api.plce.opengov.com/plce/v2"
 _community: Optional[str] = os.getenv("OPENGOV_COMMUNITY")
 _timeout: float = 30.0
 _retry_config: RetryConfig = RetryConfig()
+_auth_scheme: AuthScheme = "token"  # Default for production
 
 
 def set_api_key(key: str) -> None:
@@ -99,6 +103,23 @@ def set_timeout(timeout: float) -> None:
     """
     global _timeout
     _timeout = timeout
+
+
+def set_auth_scheme(scheme: AuthScheme) -> None:
+    """
+    Set the authentication header scheme.
+
+    Args:
+        scheme: Authentication scheme - "token" or "bearer"
+                "token" uses "Token {api_key}" format (default for production)
+                "bearer" uses "Bearer {api_key}" format (for OpenAPI spec compliance)
+
+    Example:
+        >>> import opengov_api
+        >>> opengov_api.set_auth_scheme("bearer")
+    """
+    global _auth_scheme
+    _auth_scheme = scheme
 
 
 def configure_retries(
@@ -213,6 +234,16 @@ def get_retry_config() -> RetryConfig:
     return _retry_config
 
 
+def get_auth_scheme() -> AuthScheme:
+    """
+    Get the current authentication header scheme.
+
+    Returns:
+        The configured authentication scheme ("token" or "bearer")
+    """
+    return _auth_scheme
+
+
 def _get_client() -> httpx.Client:
     """
     Create configured httpx.Client with authentication and defaults.
@@ -225,9 +256,15 @@ def _get_client() -> httpx.Client:
     """
     api_key = get_api_key()  # This will raise if not configured
 
+    # Set auth header based on configured scheme
+    if _auth_scheme == "bearer":
+        auth_header = f"Bearer {api_key}"
+    else:
+        auth_header = f"Token {api_key}"
+
     return httpx.Client(
         headers={
-            "Authorization": f"Token {api_key}",
+            "Authorization": auth_header,
             "Content-Type": "application/json",
         },
         timeout=_timeout,

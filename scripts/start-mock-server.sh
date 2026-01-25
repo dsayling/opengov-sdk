@@ -16,8 +16,8 @@ set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
-# Use the test spec without security requirements for integration testing
-OPENAPI_SPEC="$PROJECT_ROOT/docs/opengov-plc-api-test.json"
+# Use the original OpenAPI spec
+OPENAPI_SPEC="$PROJECT_ROOT/docs/opengov-plc-api.json"
 PORT="${MOCK_SERVER_PORT:-4010}"
 PID_FILE="/tmp/prism-mock-server.pid"
 LOG_FILE="/tmp/prism-mock-server.log"

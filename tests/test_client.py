@@ -12,11 +12,13 @@ from opengov_api.client import (
     set_base_url,
     set_community,
     set_timeout,
+    set_auth_scheme,
     configure_retries,
     get_api_key,
     get_base_url,
     get_community,
     get_timeout,
+    get_auth_scheme,
     get_retry_config,
     _get_client,
 )
@@ -34,6 +36,7 @@ def reset_config():
     original_community = client._community
     original_timeout = client._timeout
     original_retry_config = client._retry_config
+    original_auth_scheme = client._auth_scheme
 
     # Reset to None/defaults
     client._api_key = None
@@ -41,6 +44,7 @@ def reset_config():
     client._community = None
     client._timeout = 30.0
     client._retry_config = RetryConfig()
+    client._auth_scheme = "token"
 
     yield
 
@@ -50,6 +54,7 @@ def reset_config():
     client._community = original_community
     client._timeout = original_timeout
     client._retry_config = original_retry_config
+    client._auth_scheme = original_auth_scheme
 
 
 class TestConfiguration:
@@ -99,6 +104,15 @@ class TestConfiguration:
     def test_get_timeout_default(self):
         """Test getting default timeout."""
         assert get_timeout() == 30.0
+
+    def test_set_and_get_auth_scheme(self):
+        """Test setting and getting auth scheme."""
+        set_auth_scheme("bearer")
+        assert get_auth_scheme() == "bearer"
+
+    def test_get_auth_scheme_default(self):
+        """Test getting default auth scheme."""
+        assert get_auth_scheme() == "token"
 
 
 class TestEnvironmentVariables:
@@ -192,6 +206,42 @@ class TestGetClient:
         client2 = _get_client()
         assert client2.headers["Authorization"] == "Token second-key"
         client2.close()
+
+    def test_get_client_uses_token_scheme_by_default(self):
+        """Test _get_client uses Token prefix by default."""
+        set_api_key("test-key")
+        client = _get_client()
+        assert client.headers["Authorization"] == "Token test-key"
+        client.close()
+
+    def test_get_client_uses_bearer_scheme(self):
+        """Test _get_client uses Bearer prefix when scheme is bearer."""
+        set_api_key("test-key")
+        set_auth_scheme("bearer")
+        client = _get_client()
+        assert client.headers["Authorization"] == "Bearer test-key"
+        client.close()
+
+    def test_get_client_switches_auth_scheme(self):
+        """Test _get_client updates auth header when scheme changes."""
+        set_api_key("test-key")
+
+        # Default is token
+        client1 = _get_client()
+        assert client1.headers["Authorization"] == "Token test-key"
+        client1.close()
+
+        # Switch to bearer
+        set_auth_scheme("bearer")
+        client2 = _get_client()
+        assert client2.headers["Authorization"] == "Bearer test-key"
+        client2.close()
+
+        # Switch back to token
+        set_auth_scheme("token")
+        client3 = _get_client()
+        assert client3.headers["Authorization"] == "Token test-key"
+        client3.close()
 
 
 class TestRetryConfiguration:

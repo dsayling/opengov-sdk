@@ -124,7 +124,9 @@ def test_community() -> str:
 
 
 @pytest.fixture(autouse=True)
-def configure_client_for_integration(mock_server_url: str, test_community: str) -> None:
+def configure_client_for_integration(
+    mock_server_url: str, test_community: str
+) -> Generator[None, None, None]:
     """
     Configure the SDK client to use the mock server.
 
@@ -138,6 +140,7 @@ def configure_client_for_integration(mock_server_url: str, test_community: str) 
     original_base_url = client._base_url
     original_community = client._community
     original_timeout = client._timeout
+    original_auth_scheme = client._auth_scheme
 
     # Configure for mock server
     # Use a test API key - Prism doesn't validate auth by default
@@ -145,6 +148,7 @@ def configure_client_for_integration(mock_server_url: str, test_community: str) 
     opengov_api.set_base_url(mock_server_url)
     opengov_api.set_community(test_community)
     opengov_api.set_timeout(30.0)
+    opengov_api.set_auth_scheme("bearer")  # Use spec-compliant auth for Prism
 
     yield
 
@@ -153,6 +157,7 @@ def configure_client_for_integration(mock_server_url: str, test_community: str) 
     client._base_url = original_base_url
     client._community = original_community
     client._timeout = original_timeout
+    client._auth_scheme = original_auth_scheme
 
 
 # Test data IDs - Prism generates responses based on OpenAPI examples
