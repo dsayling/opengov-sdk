@@ -4,7 +4,7 @@ from datetime import datetime
 from typing import Any
 from pydantic import BaseModel, Field, field_validator
 
-from .enums import ChangeRequestStatus, RecordStatus, WorkflowStepStatus
+from .enums import ChangeRequestStatus, RecordStatus, StepKind, WorkflowStepStatus
 
 
 class RecordAttributes(BaseModel):
@@ -204,8 +204,8 @@ class AttachmentResource(BaseModel):
 class WorkflowStepAttributes(BaseModel):
     """Workflow step attributes."""
 
-    label: str
-    step_type: str = Field(..., alias="stepType")
+    label: str | None = None
+    step_type: StepKind = Field(..., alias="stepType")
     ordinal: int | None = None
     sequence: bool | None = None
     status: WorkflowStepStatus
