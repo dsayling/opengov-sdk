@@ -18,6 +18,3 @@ htmlcov/
 coverage
 .coverage
 .coverage.*
-
-# Generated test files
-docs/opengov-plc-api-test.json

@@ -68,27 +68,9 @@ jobs:
     - name: Install dependencies
       run: uv sync
 
-    - name: Generate test OpenAPI spec
-      run: |
-        python3 << 'EOF'
-        import json
-        with open('docs/opengov-plc-api.json') as f:
-            spec = json.load(f)
-        # Remove security from all paths for testing (auth is not tested)
-        paths = spec.get('paths', {})
-        for path, methods in paths.items():
-            for method, op in methods.items():
-                if isinstance(op, dict) and 'security' in op:
-                    del op['security']
-        if 'security' in spec:
-            del spec['security']
-        with open('docs/opengov-plc-api-test.json', 'w') as f:
-            json.dump(spec, f, indent=2)
-        EOF
-
     - name: Start mock server
       run: |
-        npx @stoplight/prism-cli mock docs/opengov-plc-api-test.json --port 4010 --host 0.0.0.0 --dynamic &
+        npx @stoplight/prism-cli mock docs/opengov-plc-api.json --port 4010 --host 0.0.0.0 --dynamic &
         # Wait for server to be ready
         for i in {1..30}; do
           if curl -s http://localhost:4010 > /dev/null 2>&1; then
