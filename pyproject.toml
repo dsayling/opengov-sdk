@@ -30,6 +30,11 @@ addopts = [
     "--cov-report=html:coverage/html",
     "--cov-report=lcov:coverage/lcov.info",
     "--cov-report=term-missing:skip-covered",
+    # Ignore integration tests by default (run with: pytest tests/integration)
+    "--ignore=tests/integration",
+]
+markers = [
+    "integration: marks tests as integration tests (require mock server)",
 ]
 
 [dependency-groups]
