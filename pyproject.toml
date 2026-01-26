@@ -36,6 +36,10 @@ addopts = [
 markers = [
     "integration: marks tests as integration tests (require mock server)",
 ]
+# Default timeout for all tests (can be overridden per-test)
+timeout = 10
+# Integration tests get longer timeout due to network calls
+timeout_func_only = true
 
 [dependency-groups]
 debug = [
@@ -46,5 +50,6 @@ dev = [
     "pytest>=9.0.2",
     "pytest-cov>=7.0.0",
     "pytest-httpx>=0.36.0",
+    "pytest-timeout>=2.3.1",
     "ruff>=0.14.11",
 ]

@@ -9,6 +9,11 @@ To start the mock server:
 
 To stop the mock server:
     ./scripts/start-mock-server.sh --stop
+
+Configuration:
+- Per-test timeout: 15 seconds (prevents hanging tests)
+- HTTP timeout: 5 seconds (fail fast on network issues)
+- Retries: Disabled (integration tests should fail immediately)
 """
 
 import os
@@ -72,10 +77,13 @@ TEST_COMMUNITY = "testcommunity"
 
 
 def pytest_configure(config: pytest.Config) -> None:
-    """Register custom markers."""
+    """Register custom markers and configure timeouts for integration tests."""
     config.addinivalue_line(
         "markers", "integration: marks tests as integration tests (require mock server)"
     )
+    # Set timeout for integration tests to 15 seconds per test
+    # This allows enough time for network calls but prevents hanging
+    config.option.timeout = 15
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -135,20 +143,32 @@ def configure_client_for_integration(
     """
     # Store original values
     from opengov_api import client
+    from opengov_api.client import RetryConfig
 
     original_api_key = client._api_key
     original_base_url = client._base_url
     original_community = client._community
     original_timeout = client._timeout
     original_auth_scheme = client._auth_scheme
+    original_retry_config = client._retry_config
 
     # Configure for mock server
     # Use a test API key - Prism doesn't validate auth by default
     opengov_api.set_api_key("test-integration-key")
     opengov_api.set_base_url(mock_server_url)
     opengov_api.set_community(test_community)
-    opengov_api.set_timeout(30.0)
+    opengov_api.set_timeout(5.0)  # Shorter timeout for integration tests
     opengov_api.set_auth_scheme("bearer")  # Use spec-compliant auth for Prism
+
+    # Disable retries for integration tests to avoid long waits
+    # Integration tests should fail fast since mock server responses are predictable
+    client._retry_config = RetryConfig(
+        max_retries=0,  # No retries - fail fast
+        initial_delay=0.0,
+        max_delay=0.0,
+        backoff_multiplier=1.0,
+        jitter_factor=0.0,
+    )
 
     yield
 
@@ -158,6 +178,7 @@ def configure_client_for_integration(
     client._community = original_community
     client._timeout = original_timeout
     client._auth_scheme = original_auth_scheme
+    client._retry_config = original_retry_config
 
 
 # Test data IDs - Prism generates responses based on OpenAPI examples

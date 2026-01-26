@@ -13,6 +13,11 @@ Run these tests:
 
 NOTE: POST/PATCH operations may fail with 400 errors because Prism validates request
 bodies against the OpenAPI spec. GET and DELETE operations work reliably.
+
+Test Configuration:
+- Each test has a 15-second timeout to prevent hanging
+- Retries are disabled for fast failure (integration tests should fail fast)
+- HTTP timeout is set to 5 seconds
 """
 
 import pytest
