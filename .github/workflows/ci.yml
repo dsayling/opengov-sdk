@@ -40,3 +40,48 @@ jobs:
 
     - name: Run pyright
       run: uv run pyright
+
+  integration-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.14'
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+
+    - name: Install uv
+      uses: astral-sh/setup-uv@v5
+      with:
+        enable-cache: true
+
+    - name: Install dependencies
+      run: uv sync
+
+    - name: Start mock server
+      run: |
+        npx @stoplight/prism-cli mock docs/opengov-plc-api.json --port 4010 --host 0.0.0.0 --dynamic &
+        # Wait for server to be ready
+        for i in {1..30}; do
+          if curl -s http://localhost:4010 > /dev/null 2>&1; then
+            echo "Mock server is ready"
+            break
+          fi
+          echo "Waiting for mock server... (attempt $i/30)"
+          sleep 1
+        done
+
+    - name: Run integration tests
+      run: uv run pytest tests/integration -v --tb=short --timeout=15
+      timeout-minutes: 10
