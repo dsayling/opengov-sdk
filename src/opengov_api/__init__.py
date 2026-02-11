@@ -27,6 +27,12 @@ from .client import (
     get_timeout,
     get_auth_scheme,
     get_retry_config,
+    set_cache,
+    enable_file_cache,
+    disable_cache,
+    get_cache,
+    get_cache_stats,
+    clear_cache,
 )
 
 # Models
@@ -183,6 +189,13 @@ __all__ = [
     "get_timeout",
     "get_auth_scheme",
     "get_retry_config",
+    # Cache
+    "set_cache",
+    "enable_file_cache",
+    "disable_cache",
+    "get_cache",
+    "get_cache_stats",
+    "clear_cache",
     # Models
     "DateRangeFilter",
     "DocumentStepResource",

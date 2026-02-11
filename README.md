@@ -7,6 +7,7 @@ A Python SDK for interacting with OpenGov APIs using a functional factory patter
 - 🔧 **Simple configuration** - Set API key and community once, use everywhere
 - 🛡️ **Type-safe** - Full type hints for better IDE support
 - 🎯 **Error handling** - Custom exceptions for different error scenarios
+- 🚀 **HTTP caching** - Optional response caching for improved performance
 - ✅ **Well-tested** - Comprehensive test suite with mocked HTTP calls
 - 📦 **Modular** - Easy to extend with new API endpoints
 
@@ -72,6 +73,62 @@ opengov_api.set_community("your-community")
 opengov_api.set_base_url("https://api.plce.opengov.com/plce/v2")
 opengov_api.set_timeout(60.0)  # Default: 30.0 seconds
 ```
+
+## HTTP Response Caching
+
+The SDK includes optional HTTP response caching to improve performance and reduce API calls.
+
+### Enable Caching
+
+```python
+import opengov_api
+
+# Configure API
+opengov_api.set_api_key("your-api-key")
+opengov_api.set_community("your-community")
+
+# Enable file-based caching
+opengov_api.enable_file_cache()
+
+# Now GET requests are automatically cached
+records = opengov_api.list_records()  # Fetches from API
+records = opengov_api.list_records()  # Returns from cache
+```
+
+### Configuration Options
+
+```python
+opengov_api.enable_file_cache(
+    cache_dir=".opengov_cache",  # Cache directory
+    default_ttl_hours=24,         # Cache lifetime in hours
+    max_cache_size_mb=100        # Maximum cache size
+)
+```
+
+### Cache Management
+
+```python
+# Get cache statistics
+stats = opengov_api.get_cache_stats()
+print(f"Cached entries: {stats['total_entries']}")
+print(f"Cache size: {stats['total_size_mb']} MB")
+
+# Clear cache
+opengov_api.clear_cache()
+
+# Disable caching
+opengov_api.disable_cache()
+```
+
+### Key Features
+
+- **Automatic**: GET requests cached automatically when enabled
+- **HTTP-aware**: Respects `Cache-Control` headers from API
+- **Isolated**: Separate caches per community/account
+- **Thread-safe**: Safe for concurrent access
+- **Smart eviction**: LRU cleanup when size limit exceeded
+
+See [docs/caching_guide.md](docs/caching_guide.md) for complete documentation and [examples/caching_usage.py](examples/caching_usage.py) for usage examples.
 
 ## Troubleshooting
 

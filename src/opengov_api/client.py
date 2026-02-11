@@ -6,11 +6,14 @@ Provides module-level configuration management and client factory.
 
 import os
 from dataclasses import dataclass
-from typing import Literal, Optional
+from typing import TYPE_CHECKING, Any, Literal, Optional
 
 import httpx
 
 from .exceptions import OpenGovConfigurationError
+
+if TYPE_CHECKING:
+    from .cache import CacheInterface
 
 # Type for authentication scheme
 AuthScheme = Literal["token", "bearer"]
@@ -43,6 +46,7 @@ _community: Optional[str] = os.getenv("OPENGOV_COMMUNITY")
 _timeout: float = 30.0
 _retry_config: RetryConfig = RetryConfig()
 _auth_scheme: AuthScheme = "token"  # Default for production
+_cache: Optional["CacheInterface"] = None  # HTTP response cache
 
 
 def set_api_key(key: str) -> None:
@@ -242,6 +246,115 @@ def get_auth_scheme() -> AuthScheme:
         The configured authentication scheme ("token" or "bearer")
     """
     return _auth_scheme
+
+
+def set_cache(cache: Optional["CacheInterface"]) -> None:
+    """
+    Set a custom cache implementation.
+
+    Args:
+        cache: Cache instance implementing CacheInterface, or None to disable caching
+
+    Example:
+        >>> import opengov_api
+        >>> from opengov_api.cache import FileCache
+        >>> cache = FileCache(cache_dir=".my_cache", default_ttl_hours=12)
+        >>> opengov_api.set_cache(cache)
+    """
+    global _cache
+    _cache = cache
+
+
+def enable_file_cache(
+    cache_dir: str = ".opengov_cache",
+    default_ttl_hours: int = 24,
+    max_cache_size_mb: int = 100,
+) -> None:
+    """
+    Enable file-based caching for HTTP responses.
+
+    Only GET requests are cached. Responses are stored in JSON files
+    and automatically expire based on TTL or Cache-Control headers.
+
+    Args:
+        cache_dir: Directory to store cache files (default: ".opengov_cache")
+        default_ttl_hours: Default time-to-live in hours (default: 24)
+        max_cache_size_mb: Maximum cache size in megabytes (default: 100)
+
+    Example:
+        >>> import opengov_api
+        >>> # Enable caching with default settings
+        >>> opengov_api.enable_file_cache()
+        >>>
+        >>> # Enable with custom settings
+        >>> opengov_api.enable_file_cache(
+        ...     cache_dir=".cache",
+        ...     default_ttl_hours=12,
+        ...     max_cache_size_mb=50
+        ... )
+    """
+    from .cache import FileCache
+
+    global _cache
+    _cache = FileCache(
+        cache_dir=cache_dir,
+        default_ttl_hours=default_ttl_hours,
+        max_cache_size_mb=max_cache_size_mb,
+    )
+
+
+def disable_cache() -> None:
+    """
+    Disable HTTP response caching.
+
+    Example:
+        >>> import opengov_api
+        >>> opengov_api.disable_cache()
+    """
+    global _cache
+    _cache = None
+
+
+def get_cache() -> Optional["CacheInterface"]:
+    """
+    Get the current cache instance.
+
+    Returns:
+        The configured cache instance, or None if caching is disabled
+    """
+    return _cache
+
+
+def get_cache_stats() -> dict[str, Any]:
+    """
+    Get cache statistics.
+
+    Returns:
+        Dictionary with cache stats (count, size, etc.) or empty dict if no cache
+
+    Example:
+        >>> import opengov_api
+        >>> opengov_api.enable_file_cache()
+        >>> # ... make some requests ...
+        >>> stats = opengov_api.get_cache_stats()
+        >>> print(f"Cached entries: {stats['total_entries']}")
+        >>> print(f"Cache size: {stats['total_size_mb']} MB")
+    """
+    if _cache:
+        return _cache.get_stats()
+    return {}
+
+
+def clear_cache() -> None:
+    """
+    Clear all cached responses.
+
+    Example:
+        >>> import opengov_api
+        >>> opengov_api.clear_cache()
+    """
+    if _cache:
+        _cache.clear()
 
 
 def _get_client() -> httpx.Client:
