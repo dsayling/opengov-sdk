@@ -13,16 +13,19 @@ Example:
 
 # Configuration functions
 from .client import (
+    AuthScheme,
     RetryConfig,
     set_api_key,
     set_base_url,
     set_community,
     set_timeout,
+    set_auth_scheme,
     configure_retries,
     get_api_key,
     get_base_url,
     get_community,
     get_timeout,
+    get_auth_scheme,
     get_retry_config,
 )
 
@@ -166,16 +169,19 @@ from .exceptions import (
 
 __all__ = [
     # Configuration
+    "AuthScheme",
     "RetryConfig",
     "set_api_key",
     "set_base_url",
     "set_community",
     "set_timeout",
+    "set_auth_scheme",
     "configure_retries",
     "get_api_key",
     "get_base_url",
     "get_community",
     "get_timeout",
+    "get_auth_scheme",
     "get_retry_config",
     # Models
     "DateRangeFilter",

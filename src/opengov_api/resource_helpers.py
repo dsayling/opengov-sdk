@@ -143,7 +143,7 @@ def list_resources(
     endpoint: str,
     resource_type: type[T],
     params: dict[str, Any] | None = None,
-) -> JSONAPIResponse[list[T]]:
+) -> JSONAPIResponse[T]:
     """
     List resources with optional query parameters.
 
@@ -167,8 +167,8 @@ def list_resources(
         response.raise_for_status()
         data = parse_json_response(response)
 
-        return JSONAPIResponse[list[resource_type]](
-            data=[resource_type(**item) for item in data["data"]],
+        return JSONAPIResponse[resource_type](
+            data=[resource_type(**item) for item in data["data"]],  # type: ignore[arg-type]
             included=data.get("included"),
             links=Links(**data["links"]) if data.get("links") else None,
             meta=Meta(**data["meta"]) if data.get("meta") else None,
@@ -176,7 +176,7 @@ def list_resources(
 
 
 def iter_paginated(
-    list_func: Callable[..., JSONAPIResponse[list[T]]],
+    list_func: Callable[..., JSONAPIResponse[T]],
     **kwargs: Any,
 ) -> Generator[T, None, None]:
     """
@@ -205,8 +205,8 @@ def iter_paginated(
     while True:
         response = list_func(page_number=page, page_size=page_size, **kwargs)
 
-        # list_func returns JSONAPIResponse[list[T]], so data is always a list
-        # Cast to list[T] since JSONAPIResponse.data is typed as T | list[T]
+        # list_func returns JSONAPIResponse[T], so data is T | list[T]
+        # For list endpoints, data is always list[T], cast to help type checker
         data = cast(list[T], response.data)
         for item in data:
             yield item

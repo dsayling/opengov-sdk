@@ -5,9 +5,8 @@ This demonstrates how to use the SDK with typed parameters and responses.
 """
 
 import opengov_api
-from opengov_api.models import RecordStatus, DateRangeFilter, RecordResource
+from opengov_api.models import RecordStatus, DateRangeFilter
 from datetime import date
-from typing import cast
 
 # Configure the SDK
 opengov_api.set_api_key("your-api-key")
@@ -22,10 +21,11 @@ response = opengov_api.list_records(
 
 print(f"Page {response.current_page()} of {response.total_pages()}")
 print(f"Total records: {response.total_records()}")
-print(f"Records on this page: {len(response.data)}")
 
-for record in cast(list[RecordResource], response.data):
-    print(f"  - {record.attributes.name} ({record.attributes.number})")
+if isinstance(response.data, list):
+    print(f"Records on this page: {len(response.data)}")
+    for record in response.data:
+        print(f"  - {record.attributes.number} ({record.attributes.number})")
 
 # Example 2: Date range filtering
 print("\nExample 2: Records created after March 1, 2025")
@@ -35,8 +35,9 @@ response = opengov_api.list_records(
     status=RecordStatus.ACTIVE,
 )
 
-for record in cast(list[RecordResource], response.data):
-    print(f"  - {record.attributes.name} created {record.attributes.created_at}")
+if isinstance(response.data, list):
+    for record in response.data:
+        print(f"  - {record.attributes.number} created {record.attributes.created_at}")
 
 # Example 3: Complex date range (Q1 2025)
 print("\nExample 3: Records from Q1 2025")
@@ -46,6 +47,11 @@ response = opengov_api.list_records(
 )
 
 print(f"Found {response.total_records()} records in Q1 2025")
+if isinstance(response.data, list):
+    for record in response.data:
+        print(
+            f"  - {record.attributes.number} created on {record.attributes.created_at}"
+        )
 
 # Example 4: Pagination - fetch next page
 print("\nExample 4: Manual pagination")
@@ -74,7 +80,7 @@ print("=" * 50)
 count = 0
 for record in opengov_api.iter_records(status=RecordStatus.ACTIVE, is_enabled=True):
     count += 1
-    print(f"  Processing record {count}: {record.attributes.name}")
+    print(f"  Processing record {count}: {record.attributes.number}")
     if count >= 5:  # Just show first 5 for demo
         print("  ... (and more)")
         break
@@ -103,9 +109,10 @@ response = opengov_api.list_records(
     page_size=10,
 )
 
-for record in cast(list[RecordResource], response.data):
-    # Only name, number, and status will be in attributes
-    print(f"  - {record.attributes.name}: {record.attributes.number}")
+if isinstance(response.data, list):
+    for record in response.data:
+        # Only name, number, and status will be in attributes
+        print(f"  - {record.id}: {record.attributes.number}")
 
 # Included resources are available in response.included
 if response.included:

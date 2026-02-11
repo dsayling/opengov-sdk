@@ -25,7 +25,7 @@ class TestRecordsEdgeCases:
                 "data": {
                     "id": record_id,
                     "type": "records",
-                    "attributes": {"name": "Special Record"},
+                    "attributes": {"number": "REC-001"},
                 }
             },
         )
@@ -33,7 +33,7 @@ class TestRecordsEdgeCases:
         result = opengov_api.get_record(record_id)
         assert not isinstance(result.data, list)
         assert result.data.id == record_id
-        assert result.data.attributes.name == "Special Record"
+        assert result.data.attributes.number == "REC-001"
 
 
 class TestRecordCRUD:
@@ -527,7 +527,11 @@ class TestRecordWorkflowSteps:
                 "data": {
                     "id": "step-1",
                     "type": "workflow-steps",
-                    "attributes": {"name": "Review"},
+                    "attributes": {
+                        "label": "Review",
+                        "stepType": "REVIEW",
+                        "status": "ACTIVE",
+                    },
                 }
             },
         )
@@ -547,7 +551,11 @@ class TestRecordWorkflowSteps:
                 "data": {
                     "id": "step-1",
                     "type": "workflow-steps",
-                    "attributes": {"name": "Review"},
+                    "attributes": {
+                        "label": "Review",
+                        "stepType": "REVIEW",
+                        "status": "ACTIVE",
+                    },
                 }
             },
         )
@@ -568,7 +576,11 @@ class TestRecordWorkflowSteps:
                 "data": {
                     "id": "step-1",
                     "type": "workflow-steps",
-                    "attributes": {"status": "completed"},
+                    "attributes": {
+                        "label": "Review",
+                        "stepType": "REVIEW",
+                        "status": "COMPLETE",
+                    },
                 }
             },
         )

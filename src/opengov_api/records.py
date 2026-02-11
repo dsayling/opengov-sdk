@@ -112,7 +112,7 @@ def list_records(
     include: list[str] | None = None,
     fields: dict[str, list[str]] | None = None,
     sort: str | None = None,
-) -> JSONAPIResponse[list[RecordResource]]:
+) -> JSONAPIResponse[RecordResource]:
     """
     List records for the configured community with pagination.
 
@@ -811,7 +811,7 @@ def list_record_guests(
     include: list[str] | None = None,
     fields: dict[str, list[str]] | None = None,
     sort: str | None = None,
-) -> JSONAPIResponse[list[GuestResource]]:
+) -> JSONAPIResponse[GuestResource]:
     """
     List guests for a record with pagination.
 
@@ -1056,7 +1056,7 @@ def list_record_additional_locations(
     include: list[str] | None = None,
     fields: dict[str, list[str]] | None = None,
     sort: str | None = None,
-) -> JSONAPIResponse[list[LocationResource]]:
+) -> JSONAPIResponse[LocationResource]:
     """
     List additional locations for a record with pagination.
 
@@ -1211,7 +1211,7 @@ def list_record_attachments(
     include: list[str] | None = None,
     fields: dict[str, list[str]] | None = None,
     sort: str | None = None,
-) -> JSONAPIResponse[list[AttachmentResource]]:
+) -> JSONAPIResponse[AttachmentResource]:
     """
     List attachments for a record with pagination.
 
@@ -1500,7 +1500,7 @@ def list_record_workflow_steps(
     include: list[str] | None = None,
     fields: dict[str, list[str]] | None = None,
     sort: str | None = None,
-) -> JSONAPIResponse[list[WorkflowStepResource]]:
+) -> JSONAPIResponse[WorkflowStepResource]:
     """
     List workflow steps for a record with pagination.
 
@@ -1692,7 +1692,7 @@ def list_record_workflow_step_comments(
     include: list[str] | None = None,
     fields: dict[str, list[str]] | None = None,
     sort: str | None = None,
-) -> JSONAPIResponse[list[WorkflowStepCommentResource]]:
+) -> JSONAPIResponse[WorkflowStepCommentResource]:
     """
     List comments for a workflow step on a record with pagination.
 
@@ -1857,7 +1857,7 @@ def list_record_collections(
     include: list[str] | None = None,
     fields: dict[str, list[str]] | None = None,
     sort: str | None = None,
-) -> JSONAPIResponse[list[CollectionResource]]:
+) -> JSONAPIResponse[CollectionResource]:
     """
     List collections for a record with pagination.
 

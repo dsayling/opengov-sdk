@@ -82,16 +82,32 @@ class TestListEndpoints:
         mock_url_with_params,
     ):
         """All list endpoints return collections successfully."""
+        # Build mock attributes based on resource type
+        resource_type = response_key.rstrip("s")
+
+        # Provide minimal required fields for each resource type
+        if resource_type == "document-step":
+            mock_attrs = {
+                "label": "Test Label",
+                "stepType": "DOCUMENT",
+                "status": "COMPLETE",
+                "documentType": "Permit/License",
+            }
+        else:
+            mock_attrs = {"name": "Item 1"}
+
         mock_items = [
             {
                 "id": "1",
-                "type": response_key.rstrip("s"),
-                "attributes": {"name": "Item 1"},
+                "type": resource_type,
+                "attributes": mock_attrs,
             },
             {
                 "id": "2",
-                "type": response_key.rstrip("s"),
-                "attributes": {"name": "Item 2"},
+                "type": resource_type,
+                "attributes": mock_attrs.copy()
+                if resource_type == "document-step"
+                else {"name": "Item 2"},
             },
         ]
         url = build_url(url_path)

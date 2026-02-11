@@ -11,16 +11,16 @@ class DocumentStepAttributes(BaseModel):
     """Document step attributes."""
 
     label: str | None = None
-    step_type: StepKind | None = Field(None, alias="stepType")
+    step_type: StepKind = Field(..., alias="stepType")
     ordinal: int | None = None
     sequence: bool | None = None
-    status: DocumentStepStatus | None = None
+    status: DocumentStepStatus
     activated_at: datetime | None = Field(None, alias="activatedAt")
     completed_at: datetime | None = Field(None, alias="completedAt")
     document_title: str | None = Field(None, alias="documentTitle")
     date_issued: datetime | None = Field(None, alias="dateIssued")
     expires_at: datetime | None = Field(None, alias="expiresAt")
-    document_type: DocumentType | None = Field(None, alias="documentType")
+    document_type: DocumentType = Field(..., alias="documentType")
     html: str | None = None
     portrait: bool | None = None
     public_can_print: bool | None = Field(None, alias="publicCanPrint")

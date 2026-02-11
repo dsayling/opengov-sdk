@@ -502,6 +502,140 @@ class {Resource}UpdateRequest(BaseModel):
 
 ---
 
+## Field Validators
+
+Field validators handle API quirks and data transformations that Pydantic can't do automatically.
+
+### Empty String to None
+
+When the API returns empty strings `""` that should be `None`:
+
+```python
+from pydantic import BaseModel, Field, field_validator
+
+class WorkflowStepAttributes(BaseModel):
+    """Workflow step attributes."""
+
+    activated_at: datetime | None = Field(None, alias="activatedAt")
+    completed_at: datetime | None = Field(None, alias="completedAt")
+
+    model_config = {"populate_by_name": True}
+
+    @field_validator("activated_at", "completed_at", mode="before")
+    @classmethod
+    def set_empty_datetime_to_none(cls, v):
+        """Convert empty strings to None for datetime fields."""
+        if v == "":
+            return None
+        return v
+```
+
+### Type Coercion
+
+When the API returns inconsistent types (e.g., number as string):
+
+```python
+class RecordAttributes(BaseModel):
+    """Record attributes."""
+
+    renewal_number: str | None = Field(None, alias="renewalNumber")
+
+    model_config = {"populate_by_name": True}
+
+    @field_validator("renewal_number", mode="before")
+    @classmethod
+    def coerce_renewal_number(cls, v):
+        """Coerce numeric values to string for renewal_number."""
+        if v is None:
+            return v
+        return str(v)
+```
+
+### Multiple Fields, Same Validator
+
+Apply the same validation to multiple fields:
+
+```python
+class LocationAttributes(BaseModel):
+    """Location attributes."""
+
+    owner_name: str | None = Field(None, alias="ownerName")
+    owner_email: str | None = Field(None, alias="ownerEmail")
+    notes: str | None = None
+
+    model_config = {"populate_by_name": True}
+
+    @field_validator("owner_name", "owner_email", "notes", mode="before")
+    @classmethod
+    def handle_empty_strings(cls, v):
+        """Convert empty strings to None for all string fields."""
+        return None if v == "" else v
+```
+
+### Conditional Validators
+
+Only apply validation when certain conditions are met:
+
+```python
+class AttachmentAttributes(BaseModel):
+    """Attachment attributes."""
+
+    file_date: datetime | None = Field(None, alias="fileDate")
+    uploaded_by_user_id: str | None = Field(None, alias="uploadedByUserID")
+
+    model_config = {"populate_by_name": True}
+
+    @field_validator("file_date", mode="before")
+    @classmethod
+    def parse_file_date(cls, v):
+        """Parse file_date, handling empty strings and invalid formats."""
+        if v == "" or v is None:
+            return None
+        if isinstance(v, str):
+            try:
+                # Handle ISO format parsing
+                return datetime.fromisoformat(v.replace('Z', '+00:00'))
+            except ValueError:
+                return None
+        return v
+```
+
+### Validator Best Practices
+
+**When to use validators:**
+- API returns empty strings `""` that should be `None`
+- API returns wrong type that needs coercion (int → str, str → int)
+- Multiple fields need same transformation
+- Complex parsing logic required (dates, nested objects)
+
+**When NOT to use validators:**
+- Standard type conversions (Pydantic handles this)
+- Business logic (belongs in service layer)
+- Simple transformations (use computed properties)
+- Validation only (use Pydantic's built-in validation)
+
+**Validator mode:**
+- Use `mode="before"` for data transformation before Pydantic validation
+- Use `mode="after"` for validation after Pydantic has parsed the field
+- Default is `mode="after"` if not specified
+
+**Example of when validators are NOT needed:**
+
+```python
+# ❌ DON'T use validator for simple type conversion
+@field_validator("created_at", mode="before")
+@classmethod
+def parse_datetime(cls, v):
+    if isinstance(v, str):
+        return datetime.fromisoformat(v)
+    return v
+
+# ✅ DO let Pydantic handle it automatically
+created_at: datetime | None = Field(None, alias="createdAt")
+```
+
+---
+
 ## Params Model
 
 Add to `src/opengov_api/models/params.py`:
