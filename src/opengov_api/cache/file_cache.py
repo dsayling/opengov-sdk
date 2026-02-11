@@ -16,7 +16,12 @@ _log = logging.getLogger(__name__)
 
 
 class FileCache(CacheInterface):
-    """File-based cache for storing HTTP responses."""
+    """
+    File-based cache for storing HTTP responses.
+
+    Eviction policy: When cache size exceeds the limit, oldest files
+    (by modification time) are removed first until cache is at 80% of limit.
+    """
 
     def __init__(
         self,
@@ -121,17 +126,17 @@ class FileCache(CacheInterface):
                     data=data,
                     cached_at=datetime.now().isoformat(),
                     ttl_seconds=ttl_sec,
-                    size_bytes=0,
+                    size_bytes=0,  # Persisted as 0; actual size computed from file when needed
                 )
 
                 # Write to cache
                 entry_json = entry.model_dump_json(indent=2)
                 cache_file.write_text(entry_json)
 
-                # Update size
-                entry.size_bytes = cache_file.stat().st_size
+                # Get actual file size for logging
+                actual_size = cache_file.stat().st_size
 
-                _log.debug(f"Cached: {key} ({entry.size_bytes} bytes, TTL: {ttl_sec}s)")
+                _log.debug(f"Cached: {key} ({actual_size} bytes, TTL: {ttl_sec}s)")
 
                 # Check cache size and cleanup if needed
                 self._enforce_size_limit()
@@ -182,21 +187,41 @@ class FileCache(CacheInterface):
         """Remove oldest cache entries until under size limit (must be called with lock)."""
         cache_files = list(self.cache_dir.glob("*.json"))
 
+        # Precompute file sizes and modification times to avoid repeated stat() calls
+        file_info: list[tuple[Path, int, float]] = []
+        for cache_file in cache_files:
+            try:
+                stat = cache_file.stat()
+            except FileNotFoundError:
+                # File may have been removed concurrently; skip it
+                continue
+            file_info.append((cache_file, stat.st_size, stat.st_mtime))
+
+        if not file_info:
+            _log.info("No cache entries to remove during cleanup")
+            return
+
         # Sort by modification time (oldest first)
-        cache_files.sort(key=lambda f: f.stat().st_mtime)
+        file_info.sort(key=lambda item: item[2])
+
+        # Compute total cache size once
+        total_size = sum(size for _, size, _ in file_info)
+        total_size_mb = total_size / (1024 * 1024)
+        threshold_mb = self.max_cache_size_mb * 0.8  # 80% threshold
 
         removed_count = 0
-        for cache_file in cache_files:
-            # Check current size
-            total_size = sum(
-                f.stat().st_size for f in self.cache_dir.glob("*.json") if f.is_file()
-            )
-            total_size_mb = total_size / (1024 * 1024)
-
-            if total_size_mb <= self.max_cache_size_mb * 0.8:  # 80% threshold
+        for cache_file, size, _ in file_info:
+            if total_size_mb <= threshold_mb:
                 break
 
-            cache_file.unlink()
+            try:
+                cache_file.unlink()
+            except FileNotFoundError:
+                # If already removed, just continue and update accounting as if it were gone
+                pass
+
+            total_size -= size
+            total_size_mb = total_size / (1024 * 1024)
             removed_count += 1
 
         _log.info(f"Removed {removed_count} old cache entries")
@@ -221,8 +246,12 @@ class FileCache(CacheInterface):
                         entry = CacheEntry(**entry_data)
                         if entry.is_expired():
                             expired_count += 1
-                except Exception:
-                    pass
+                except Exception as exc:
+                    _log.debug(
+                        "Failed to read cache entry from %s while collecting stats: %s",
+                        cache_file,
+                        exc,
+                    )
 
             return {
                 "total_entries": len(cache_files),

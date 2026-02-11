@@ -90,7 +90,7 @@ opengov_api.set_community("your-community")
 # Enable file-based caching
 opengov_api.enable_file_cache()
 
-# Now GET requests are automatically cached
+# Now GET requests through resource helpers are automatically cached
 records = opengov_api.list_records()  # Fetches from API
 records = opengov_api.list_records()  # Returns from cache
 ```
@@ -122,13 +122,13 @@ opengov_api.disable_cache()
 
 ### Key Features
 
-- **Automatic**: GET requests cached automatically when enabled
+- **Automatic**: GET requests through resource helpers cached automatically when enabled
 - **HTTP-aware**: Respects `Cache-Control` headers from API
 - **Isolated**: Separate caches per community/account
 - **Thread-safe**: Safe for concurrent access
-- **Smart eviction**: LRU cleanup when size limit exceeded
+- **Smart eviction**: Cleans up oldest cache files first (based on modification time) when size limit is exceeded
 
-See [docs/caching_guide.md](docs/caching_guide.md) for complete documentation and [examples/caching_usage.py](examples/caching_usage.py) for usage examples.
+See [examples/caching_usage.py](examples/caching_usage.py) for usage examples.
 
 ## Troubleshooting
 
