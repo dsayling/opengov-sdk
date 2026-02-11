@@ -443,3 +443,155 @@ class TestCacheKeyGeneration:
         key2 = _generate_cache_key("GET", "https://api.example.com/records", params2)
 
         assert key1 == key2
+
+
+class TestCacheHitBehavior:
+    """Tests for actual cache hit behavior with SDK calls."""
+
+    def test_list_records_uses_cache_on_second_call(
+        self, httpx_mock, configure_client, build_url, tmp_path
+    ):
+        """Test that repeated list_records calls hit cache and avoid second HTTP request."""
+        import opengov_api
+        from opengov_api.models import RecordStatus
+        import re
+
+        # Enable caching
+        cache_dir = str(tmp_path / "cache")
+        opengov_api.enable_file_cache(cache_dir=cache_dir)
+
+        # Mock the API response - use regex to match any query params
+        url_pattern = re.compile(
+            re.escape(build_url("testcommunity/records")) + r"(\?.*)?$"
+        )
+        mock_response = {
+            "data": [
+                {
+                    "type": "records",
+                    "id": "rec-1",
+                    "attributes": {"name": "Test Record"},
+                }
+            ],
+            "links": {},
+            "meta": {"total_count": 1},
+        }
+        # Allow this response to be used only once (first call hits API, second hits cache)
+        httpx_mock.add_response(url=url_pattern, json=mock_response)
+
+        # First call - should hit API
+        result1 = opengov_api.list_records(status=RecordStatus.ACTIVE, page_size=10)
+        assert isinstance(result1.data, list)
+        assert len(result1.data) == 1
+
+        # Verify one request was made
+        requests = httpx_mock.get_requests()
+        assert len(requests) == 1
+
+        # Second identical call - should use cache, NOT make another request
+        result2 = opengov_api.list_records(status=RecordStatus.ACTIVE, page_size=10)
+        assert isinstance(result2.data, list)
+        assert len(result2.data) == 1
+
+        # Verify still only one request (second call used cache)
+        requests = httpx_mock.get_requests()
+        assert len(requests) == 1, (
+            "Second call should have used cache, not made new request"
+        )
+
+        # Verify results are consistent
+        assert result1.data[0].id == result2.data[0].id
+
+        # Cleanup
+        opengov_api.disable_cache()
+
+    def test_get_record_uses_cache_on_second_call(
+        self, httpx_mock, configure_client, build_url, tmp_path
+    ):
+        """Test that repeated get_record calls hit cache and avoid second HTTP request."""
+        import opengov_api
+
+        # Enable caching
+        cache_dir = str(tmp_path / "cache")
+        opengov_api.enable_file_cache(cache_dir=cache_dir)
+
+        # Mock the API response
+        url = build_url("testcommunity/records/rec-123")
+        mock_response = {
+            "data": {
+                "type": "records",
+                "id": "rec-123",
+                "attributes": {"name": "Test Record"},
+            },
+            "links": {},
+        }
+        httpx_mock.add_response(url=url, json=mock_response)
+
+        # First call - should hit API
+        result1 = opengov_api.get_record("rec-123")
+        assert not isinstance(result1.data, list)
+        assert result1.data.id == "rec-123"
+
+        # Verify one request was made
+        requests = httpx_mock.get_requests()
+        assert len(requests) == 1
+
+        # Second call - should use cache
+        result2 = opengov_api.get_record("rec-123")
+        assert not isinstance(result2.data, list)
+        assert result2.data.id == "rec-123"
+
+        # Verify still only one request (second call used cache)
+        requests = httpx_mock.get_requests()
+        assert len(requests) == 1, (
+            "Second call should have used cache, not made new request"
+        )
+
+        # Cleanup
+        opengov_api.disable_cache()
+
+    def test_different_params_create_different_cache_entries(
+        self, httpx_mock, configure_client, build_url, tmp_path
+    ):
+        """Test that different parameters create different cache entries."""
+        import opengov_api
+        from opengov_api.models import RecordStatus
+
+        # Enable caching
+        cache_dir = str(tmp_path / "cache")
+        opengov_api.enable_file_cache(cache_dir=cache_dir)
+
+        # Mock the API response for any call to records endpoint
+        # Must allow multiple responses since we'll make 2 different requests
+        import re
+
+        url_pattern = re.compile(
+            re.escape(build_url("testcommunity/records")) + r"(\?.*)?$"
+        )
+        mock_response = {
+            "data": [],
+            "links": {},
+            "meta": {"total_count": 0},
+        }
+        # Add 2 responses for 2 different calls (they won't be cached since params differ)
+        httpx_mock.add_response(url=url_pattern, json=mock_response)
+        httpx_mock.add_response(url=url_pattern, json=mock_response)
+
+        # Call with different parameters
+        opengov_api.list_records(status=RecordStatus.ACTIVE, page_size=10)
+        opengov_api.list_records(status=RecordStatus.ACTIVE, page_size=20)
+
+        # Verify two requests were made (different params = cache miss)
+        requests = httpx_mock.get_requests()
+        assert len(requests) == 2, (
+            "Different parameters should create different cache entries"
+        )
+
+        # Call again with same params as first call - should hit cache (no new request)
+        opengov_api.list_records(status=RecordStatus.ACTIVE, page_size=10)
+
+        # Verify still only two requests (third call used cache)
+        requests = httpx_mock.get_requests()
+        assert len(requests) == 2, "Repeated call with same params should use cache"
+
+        # Cleanup
+        opengov_api.disable_cache()

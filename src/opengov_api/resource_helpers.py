@@ -5,6 +5,7 @@ Provides reusable CRUD operations and pagination helpers that can be used
 across all resource modules (records, users, locations, projects, etc.).
 """
 
+import base64
 import hashlib
 import json
 from typing import Any, Callable, Generator, TypeVar, cast
@@ -83,10 +84,14 @@ def _make_cached_request(
     cached_data = cache.get(cache_key)
     if cached_data is not None:
         # Reconstruct response from cached data
+        # Decode base64-encoded content back to bytes
+        content = cached_data["content"]
+        if isinstance(content, str):
+            content = base64.b64decode(content)
         return httpx.Response(
             status_code=cached_data["status_code"],
             headers=cached_data["headers"],
-            content=cached_data["content"],
+            content=content,
             request=httpx.Request(method, url),
         )
 
@@ -98,13 +103,13 @@ def _make_cached_request(
         # Extract TTL from response headers
         ttl_seconds = HTTPCacheHelper.get_cache_ttl(response)
 
-        # Cache response data
+        # Cache response data, encoding bytes as base64 for JSON storage
         cache.set(
             cache_key,
             {
                 "status_code": response.status_code,
                 "headers": dict(response.headers),
-                "content": response.content,
+                "content": base64.b64encode(response.content).decode("ascii"),
             },
             ttl_seconds=ttl_seconds,
         )

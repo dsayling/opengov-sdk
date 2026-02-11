@@ -79,7 +79,7 @@ def cache_management_example():
     # Populate cache
     print("Populating cache...")
     opengov_api.list_records(page_size=5)
-    opengov_api.list_users()
+    opengov_api.list_records(page_size=10)  # Different params = new cache entry
 
     stats = opengov_api.get_cache_stats()
     print(f"Cache entries: {stats['total_entries']}")
@@ -148,7 +148,7 @@ def monitoring_cache_example():
     print("Making various API calls...")
     opengov_api.list_records(page_size=10)
     opengov_api.list_records(page_size=20)  # Different params = new cache entry
-    opengov_api.list_users()
+    opengov_api.list_records(page_size=30)  # Different params = new cache entry
 
     # Get detailed statistics
     stats = opengov_api.get_cache_stats()
@@ -212,7 +212,7 @@ def custom_cache_implementation_example():
     # Make requests
     print("\nMaking API calls with custom cache...")
     opengov_api.list_records(page_size=5)
-    opengov_api.list_users()
+    opengov_api.list_records(page_size=10)  # Different params = new cache entry
 
     # Check stats
     stats = opengov_api.get_cache_stats()

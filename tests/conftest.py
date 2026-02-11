@@ -134,6 +134,7 @@ def reset_config(test_base_url):
     original_community = client._community
     original_timeout = client._timeout
     original_retry_config = client._retry_config
+    original_cache = client._cache
 
     # Reset to None/defaults
     client._api_key = None
@@ -141,6 +142,7 @@ def reset_config(test_base_url):
     client._community = None
     client._timeout = 30.0
     client._retry_config = RetryConfig()  # Reset to default
+    client._cache = None  # Reset cache state
 
     yield
 
@@ -150,6 +152,7 @@ def reset_config(test_base_url):
     client._community = original_community
     client._timeout = original_timeout
     client._retry_config = original_retry_config
+    client._cache = original_cache
 
 
 @pytest.fixture

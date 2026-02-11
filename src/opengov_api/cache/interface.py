@@ -30,7 +30,8 @@ class CacheInterface(ABC):
         Args:
             key: Cache key
             data: Data to cache
-            ttl_seconds: Time to live in seconds (None for no expiration)
+            ttl_seconds: Time to live in seconds. Use None to apply the
+                cache's default TTL, or 0 to indicate no expiration.
         """
         pass
 
