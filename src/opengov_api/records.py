@@ -65,7 +65,6 @@ from .models import (
     FormResource,
     GuestResource,
     JSONAPIResponse,
-    Links,
     ListRecordAdditionalLocationsParams,
     ListRecordAttachmentsParams,
     ListRecordCollectionsParams,
@@ -74,11 +73,19 @@ from .models import (
     ListRecordWorkflowStepCommentsParams,
     ListRecordWorkflowStepsParams,
     LocationResource,
-    Meta,
     RecordResource,
     RecordStatus,
     WorkflowStepCommentResource,
     WorkflowStepResource,
+)
+from .resource_helpers import (
+    build_nested_url,
+    create_resource,
+    delete_resource,
+    get_resource,
+    iter_paginated,
+    list_resources,
+    update_resource,
 )
 
 
@@ -200,19 +207,11 @@ def list_records(
         sort=sort,
     )
 
-    with _get_client() as client:
-        url = build_url(get_base_url(), get_community(), "records")
-        response = client.get(url, params=params_model.to_query_params())
-        response.raise_for_status()
-        data = parse_json_response(response)
-
-        # Parse into typed response
-        return JSONAPIResponse[RecordResource](
-            data=[RecordResource(**item) for item in data["data"]],
-            included=data.get("included"),
-            links=Links(**data["links"]) if data.get("links") else None,
-            meta=Meta(**data["meta"]) if data.get("meta") else None,
-        )
+    return list_resources(
+        "records",
+        RecordResource,
+        params_model.to_query_params(),
+    )
 
 
 @handle_request_errors
@@ -280,43 +279,28 @@ def iter_records(
         ... ):
         ...     process_record(record)
     """
-    page = 1
-    while True:
-        response = list_records(
-            number=number,
-            hist_id=hist_id,
-            hist_number=hist_number,
-            type_id=type_id,
-            project_id=project_id,
-            status=status,
-            created_at=created_at,
-            updated_at=updated_at,
-            submitted_at=submitted_at,
-            expires_at=expires_at,
-            is_enabled=is_enabled,
-            renewal_submitted=renewal_submitted,
-            submitted_online=submitted_online,
-            renewal_number=renewal_number,
-            renewal_of_record_id=renewal_of_record_id,
-            page_number=page,
-            page_size=page_size,
-            include=include,
-            fields=fields,
-            sort=sort,
-        )
-
-        # Yield all records from this page
-        if isinstance(response.data, list):
-            for record in response.data:
-                yield record
-        else:
-            yield response.data
-
-        # Check if there's a next page
-        if not response.has_next_page():
-            break
-
-        page += 1
+    return iter_paginated(
+        list_records,
+        number=number,
+        hist_id=hist_id,
+        hist_number=hist_number,
+        type_id=type_id,
+        project_id=project_id,
+        status=status,
+        created_at=created_at,
+        updated_at=updated_at,
+        submitted_at=submitted_at,
+        expires_at=expires_at,
+        is_enabled=is_enabled,
+        renewal_submitted=renewal_submitted,
+        submitted_online=submitted_online,
+        renewal_number=renewal_number,
+        renewal_of_record_id=renewal_of_record_id,
+        page_size=page_size,
+        include=include,
+        fields=fields,
+        sort=sort,
+    )
 
 
 @handle_request_errors
@@ -345,27 +329,13 @@ def iter_record_guests(
         >>> for guest in opengov_api.iter_record_guests("12345"):
         ...     print(f"{guest.attributes.name}")
     """
-    page = 1
-    while True:
-        response = list_record_guests(
-            record_id=record_id,
-            page_number=page,
-            page_size=page_size,
-            include=include,
-            fields=fields,
-            sort=sort,
-        )
-
-        if isinstance(response.data, list):
-            for item in response.data:
-                yield item
-        else:
-            yield response.data
-
-        if not response.has_next_page():
-            break
-
-        page += 1
+    return iter_paginated(
+        lambda **kwargs: list_record_guests(record_id, **kwargs),
+        page_size=page_size,
+        include=include,
+        fields=fields,
+        sort=sort,
+    )
 
 
 @handle_request_errors
@@ -394,27 +364,13 @@ def iter_record_additional_locations(
         >>> for location in opengov_api.iter_record_additional_locations("12345"):
         ...     print(f"{location.attributes.address}")
     """
-    page = 1
-    while True:
-        response = list_record_additional_locations(
-            record_id=record_id,
-            page_number=page,
-            page_size=page_size,
-            include=include,
-            fields=fields,
-            sort=sort,
-        )
-
-        if isinstance(response.data, list):
-            for item in response.data:
-                yield item
-        else:
-            yield response.data
-
-        if not response.has_next_page():
-            break
-
-        page += 1
+    return iter_paginated(
+        lambda **kwargs: list_record_additional_locations(record_id, **kwargs),
+        page_size=page_size,
+        include=include,
+        fields=fields,
+        sort=sort,
+    )
 
 
 @handle_request_errors
@@ -443,27 +399,13 @@ def iter_record_attachments(
         >>> for attachment in opengov_api.iter_record_attachments("12345"):
         ...     print(f"{attachment.attributes.filename}")
     """
-    page = 1
-    while True:
-        response = list_record_attachments(
-            record_id=record_id,
-            page_number=page,
-            page_size=page_size,
-            include=include,
-            fields=fields,
-            sort=sort,
-        )
-
-        if isinstance(response.data, list):
-            for item in response.data:
-                yield item
-        else:
-            yield response.data
-
-        if not response.has_next_page():
-            break
-
-        page += 1
+    return iter_paginated(
+        lambda **kwargs: list_record_attachments(record_id, **kwargs),
+        page_size=page_size,
+        include=include,
+        fields=fields,
+        sort=sort,
+    )
 
 
 @handle_request_errors
@@ -492,27 +434,13 @@ def iter_record_workflow_steps(
         >>> for step in opengov_api.iter_record_workflow_steps("12345"):
         ...     print(f"{step.attributes.name}")
     """
-    page = 1
-    while True:
-        response = list_record_workflow_steps(
-            record_id=record_id,
-            page_number=page,
-            page_size=page_size,
-            include=include,
-            fields=fields,
-            sort=sort,
-        )
-
-        if isinstance(response.data, list):
-            for item in response.data:
-                yield item
-        else:
-            yield response.data
-
-        if not response.has_next_page():
-            break
-
-        page += 1
+    return iter_paginated(
+        lambda **kwargs: list_record_workflow_steps(record_id, **kwargs),
+        page_size=page_size,
+        include=include,
+        fields=fields,
+        sort=sort,
+    )
 
 
 @handle_request_errors
@@ -543,28 +471,15 @@ def iter_record_workflow_step_comments(
         >>> for comment in opengov_api.iter_record_workflow_step_comments("12345", "step-123"):
         ...     print(f"{comment.attributes.text}")
     """
-    page = 1
-    while True:
-        response = list_record_workflow_step_comments(
-            record_id=record_id,
-            step_id=step_id,
-            page_number=page,
-            page_size=page_size,
-            include=include,
-            fields=fields,
-            sort=sort,
-        )
-
-        if isinstance(response.data, list):
-            for item in response.data:
-                yield item
-        else:
-            yield response.data
-
-        if not response.has_next_page():
-            break
-
-        page += 1
+    return iter_paginated(
+        lambda **kwargs: list_record_workflow_step_comments(
+            record_id, step_id, **kwargs
+        ),
+        page_size=page_size,
+        include=include,
+        fields=fields,
+        sort=sort,
+    )
 
 
 @handle_request_errors
@@ -593,27 +508,13 @@ def iter_record_collections(
         >>> for collection in opengov_api.iter_record_collections("12345"):
         ...     print(f"{collection.attributes.name}")
     """
-    page = 1
-    while True:
-        response = list_record_collections(
-            record_id=record_id,
-            page_number=page,
-            page_size=page_size,
-            include=include,
-            fields=fields,
-            sort=sort,
-        )
-
-        if isinstance(response.data, list):
-            for item in response.data:
-                yield item
-        else:
-            yield response.data
-
-        if not response.has_next_page():
-            break
-
-        page += 1
+    return iter_paginated(
+        lambda **kwargs: list_record_collections(record_id, **kwargs),
+        page_size=page_size,
+        include=include,
+        fields=fields,
+        sort=sort,
+    )
 
 
 @handle_request_errors
@@ -642,18 +543,7 @@ def get_record(record_id: str) -> JSONAPIResponse[RecordResource]:
         >>> response = opengov_api.get_record("12345")
         >>> print(response.data.attributes.name)
     """
-    with _get_client() as client:
-        url = build_url(get_base_url(), get_community(), f"records/{record_id}")
-        response = client.get(url)
-        response.raise_for_status()
-        data = parse_json_response(response)
-
-        return JSONAPIResponse[RecordResource](
-            data=RecordResource(**data["data"]),
-            included=data.get("included"),
-            links=Links(**data["links"]) if data.get("links") else None,
-            meta=Meta(**data["meta"]) if data.get("meta") else None,
-        )
+    return get_resource(f"records/{record_id}", RecordResource)
 
 
 @handle_request_errors
@@ -682,18 +572,7 @@ def create_record(data: dict[str, Any]) -> JSONAPIResponse[RecordResource]:
         >>> response = opengov_api.create_record(record_data)
         >>> print(response.data.attributes.name)
     """
-    with _get_client() as client:
-        url = build_url(get_base_url(), get_community(), "records")
-        response = client.post(url, json=data)
-        response.raise_for_status()
-        data = parse_json_response(response)
-
-        return JSONAPIResponse[RecordResource](
-            data=RecordResource(**data["data"]),
-            included=data.get("included"),
-            links=Links(**data["links"]) if data.get("links") else None,
-            meta=Meta(**data["meta"]) if data.get("meta") else None,
-        )
+    return create_resource("records", RecordResource, data)
 
 
 @handle_request_errors
@@ -726,18 +605,7 @@ def update_record(
         >>> response = opengov_api.update_record("12345", record_data)
         >>> print(response.data.attributes.name)
     """
-    with _get_client() as client:
-        url = build_url(get_base_url(), get_community(), f"records/{record_id}")
-        response = client.patch(url, json=data)
-        response.raise_for_status()
-        data = parse_json_response(response)
-
-        return JSONAPIResponse[RecordResource](
-            data=RecordResource(**data["data"]),
-            included=data.get("included"),
-            links=Links(**data["links"]) if data.get("links") else None,
-            meta=Meta(**data["meta"]) if data.get("meta") else None,
-        )
+    return update_resource(f"records/{record_id}", RecordResource, data)
 
 
 @handle_request_errors
@@ -761,10 +629,7 @@ def archive_record(record_id: str) -> None:
         >>> opengov_api.set_community("your-community")
         >>> opengov_api.archive_record("12345")
     """
-    with _get_client() as client:
-        url = build_url(get_base_url(), get_community(), f"records/{record_id}")
-        response = client.delete(url)
-        response.raise_for_status()
+    delete_resource(f"records/{record_id}")
 
 
 # Record Form endpoints
@@ -869,20 +734,10 @@ def get_record_applicant(record_id: str) -> JSONAPIResponse[ApplicantResource]:
         >>> applicant = opengov_api.get_record_applicant("12345")
         >>> print(applicant.data.id)
     """
-    with _get_client() as client:
-        url = build_url(
-            get_base_url(), get_community(), f"records/{record_id}/applicant"
-        )
-        response = client.get(url)
-        response.raise_for_status()
-        data = parse_json_response(response)
-
-        return JSONAPIResponse[ApplicantResource](
-            data=ApplicantResource(**data["data"]),
-            included=data.get("included"),
-            links=Links(**data["links"]) if data.get("links") else None,
-            meta=Meta(**data["meta"]) if data.get("meta") else None,
-        )
+    return get_resource(
+        build_nested_url("records", record_id, "applicant"),
+        ApplicantResource,
+    )
 
 
 @handle_request_errors
@@ -915,20 +770,11 @@ def update_record_applicant(
         >>> applicant = opengov_api.update_record_applicant("12345", applicant_data)
         >>> print(applicant.data.id)
     """
-    with _get_client() as client:
-        url = build_url(
-            get_base_url(), get_community(), f"records/{record_id}/applicant"
-        )
-        response = client.patch(url, json=data)
-        response.raise_for_status()
-        data = parse_json_response(response)
-
-        return JSONAPIResponse[ApplicantResource](
-            data=ApplicantResource(**data["data"]),
-            included=data.get("included"),
-            links=Links(**data["links"]) if data.get("links") else None,
-            meta=Meta(**data["meta"]) if data.get("meta") else None,
-        )
+    return update_resource(
+        build_nested_url("records", record_id, "applicant"),
+        ApplicantResource,
+        data,
+    )
 
 
 @handle_request_errors
@@ -952,12 +798,7 @@ def remove_record_applicant(record_id: str) -> None:
         >>> opengov_api.set_community("your-community")
         >>> opengov_api.remove_record_applicant("12345")
     """
-    with _get_client() as client:
-        url = build_url(
-            get_base_url(), get_community(), f"records/{record_id}/applicant"
-        )
-        response = client.delete(url)
-        response.raise_for_status()
+    delete_resource(build_nested_url("records", record_id, "applicant"))
 
 
 # Record Guests endpoints
@@ -1009,18 +850,11 @@ def list_record_guests(
         sort=sort,
     )
 
-    with _get_client() as client:
-        url = build_url(get_base_url(), get_community(), f"records/{record_id}/guests")
-        response = client.get(url, params=params_model.to_query_params())
-        response.raise_for_status()
-        data = parse_json_response(response)
-
-        return JSONAPIResponse[GuestResource](
-            data=[GuestResource(**item) for item in data["data"]],
-            included=data.get("included"),
-            links=Links(**data["links"]) if data.get("links") else None,
-            meta=Meta(**data["meta"]) if data.get("meta") else None,
-        )
+    return list_resources(
+        build_nested_url("records", record_id, "guests"),
+        GuestResource,
+        params_model.to_query_params(),
+    )
 
 
 @handle_request_errors
@@ -1053,18 +887,11 @@ def add_record_guest(
         >>> response = opengov_api.add_record_guest("12345", guest_data)
         >>> print(response.data.attributes.name)
     """
-    with _get_client() as client:
-        url = build_url(get_base_url(), get_community(), f"records/{record_id}/guests")
-        response = client.post(url, json=data)
-        response.raise_for_status()
-        data = parse_json_response(response)
-
-        return JSONAPIResponse[GuestResource](
-            data=GuestResource(**data["data"]),
-            included=data.get("included"),
-            links=Links(**data["links"]) if data.get("links") else None,
-            meta=Meta(**data["meta"]) if data.get("meta") else None,
-        )
+    return create_resource(
+        build_nested_url("records", record_id, "guests"),
+        GuestResource,
+        data,
+    )
 
 
 @handle_request_errors
@@ -1094,20 +921,10 @@ def get_record_guest(record_id: str, user_id: str) -> JSONAPIResponse[GuestResou
         >>> response = opengov_api.get_record_guest("12345", "user-123")
         >>> print(response.data.attributes.name)
     """
-    with _get_client() as client:
-        url = build_url(
-            get_base_url(), get_community(), f"records/{record_id}/guests/{user_id}"
-        )
-        response = client.get(url)
-        response.raise_for_status()
-        data = parse_json_response(response)
-
-        return JSONAPIResponse[GuestResource](
-            data=GuestResource(**data["data"]),
-            included=data.get("included"),
-            links=Links(**data["links"]) if data.get("links") else None,
-            meta=Meta(**data["meta"]) if data.get("meta") else None,
-        )
+    return get_resource(
+        build_nested_url("records", record_id, "guests", user_id),
+        GuestResource,
+    )
 
 
 @handle_request_errors
@@ -1132,12 +949,7 @@ def remove_record_guest(record_id: str, user_id: str) -> None:
         >>> opengov_api.set_community("your-community")
         >>> opengov_api.remove_record_guest("12345", "user-123")
     """
-    with _get_client() as client:
-        url = build_url(
-            get_base_url(), get_community(), f"records/{record_id}/guests/{user_id}"
-        )
-        response = client.delete(url)
-        response.raise_for_status()
+    delete_resource(build_nested_url("records", record_id, "guests", user_id))
 
 
 # Record Primary Location endpoints
@@ -1167,20 +979,10 @@ def get_record_primary_location(record_id: str) -> JSONAPIResponse[LocationResou
         >>> response = opengov_api.get_record_primary_location("12345")
         >>> print(response.data.attributes.address)
     """
-    with _get_client() as client:
-        url = build_url(
-            get_base_url(), get_community(), f"records/{record_id}/primary-location"
-        )
-        response = client.get(url)
-        response.raise_for_status()
-        data = parse_json_response(response)
-
-        return JSONAPIResponse[LocationResource](
-            data=LocationResource(**data["data"]),
-            included=data.get("included"),
-            links=Links(**data["links"]) if data.get("links") else None,
-            meta=Meta(**data["meta"]) if data.get("meta") else None,
-        )
+    return get_resource(
+        build_nested_url("records", record_id, "primary-location"),
+        LocationResource,
+    )
 
 
 @handle_request_errors
@@ -1213,20 +1015,11 @@ def update_record_primary_location(
         >>> response = opengov_api.update_record_primary_location("12345", location_data)
         >>> print(response.data.attributes.address)
     """
-    with _get_client() as client:
-        url = build_url(
-            get_base_url(), get_community(), f"records/{record_id}/primary-location"
-        )
-        response = client.patch(url, json=data)
-        response.raise_for_status()
-        data = parse_json_response(response)
-
-        return JSONAPIResponse[LocationResource](
-            data=LocationResource(**data["data"]),
-            included=data.get("included"),
-            links=Links(**data["links"]) if data.get("links") else None,
-            meta=Meta(**data["meta"]) if data.get("meta") else None,
-        )
+    return update_resource(
+        build_nested_url("records", record_id, "primary-location"),
+        LocationResource,
+        data,
+    )
 
 
 @handle_request_errors
@@ -1250,12 +1043,7 @@ def remove_record_primary_location(record_id: str) -> None:
         >>> opengov_api.set_community("your-community")
         >>> opengov_api.remove_record_primary_location("12345")
     """
-    with _get_client() as client:
-        url = build_url(
-            get_base_url(), get_community(), f"records/{record_id}/primary-location"
-        )
-        response = client.delete(url)
-        response.raise_for_status()
+    delete_resource(build_nested_url("records", record_id, "primary-location"))
 
 
 # Record Additional Locations endpoints
@@ -1307,20 +1095,11 @@ def list_record_additional_locations(
         sort=sort,
     )
 
-    with _get_client() as client:
-        url = build_url(
-            get_base_url(), get_community(), f"records/{record_id}/additional-locations"
-        )
-        response = client.get(url, params=params_model.to_query_params())
-        response.raise_for_status()
-        data = parse_json_response(response)
-
-        return JSONAPIResponse[LocationResource](
-            data=[LocationResource(**item) for item in data["data"]],
-            included=data.get("included"),
-            links=Links(**data["links"]) if data.get("links") else None,
-            meta=Meta(**data["meta"]) if data.get("meta") else None,
-        )
+    return list_resources(
+        build_nested_url("records", record_id, "additional-locations"),
+        LocationResource,
+        params_model.to_query_params(),
+    )
 
 
 @handle_request_errors
@@ -1353,20 +1132,11 @@ def add_record_additional_location(
         >>> response = opengov_api.add_record_additional_location("12345", location_data)
         >>> print(response.data.attributes.address)
     """
-    with _get_client() as client:
-        url = build_url(
-            get_base_url(), get_community(), f"records/{record_id}/additional-locations"
-        )
-        response = client.post(url, json=data)
-        response.raise_for_status()
-        data = parse_json_response(response)
-
-        return JSONAPIResponse[LocationResource](
-            data=LocationResource(**data["data"]),
-            included=data.get("included"),
-            links=Links(**data["links"]) if data.get("links") else None,
-            meta=Meta(**data["meta"]) if data.get("meta") else None,
-        )
+    return create_resource(
+        build_nested_url("records", record_id, "additional-locations"),
+        LocationResource,
+        data,
+    )
 
 
 @handle_request_errors
@@ -1398,22 +1168,10 @@ def get_record_additional_location(
         >>> response = opengov_api.get_record_additional_location("12345", "loc-123")
         >>> print(response.data.attributes.address)
     """
-    with _get_client() as client:
-        url = build_url(
-            get_base_url(),
-            get_community(),
-            f"records/{record_id}/additional-locations/{location_id}",
-        )
-        response = client.get(url)
-        response.raise_for_status()
-        data = parse_json_response(response)
-
-        return JSONAPIResponse[LocationResource](
-            data=LocationResource(**data["data"]),
-            included=data.get("included"),
-            links=Links(**data["links"]) if data.get("links") else None,
-            meta=Meta(**data["meta"]) if data.get("meta") else None,
-        )
+    return get_resource(
+        build_nested_url("records", record_id, "additional-locations", location_id),
+        LocationResource,
+    )
 
 
 @handle_request_errors
@@ -1438,14 +1196,9 @@ def remove_record_additional_location(record_id: str, location_id: str) -> None:
         >>> opengov_api.set_community("your-community")
         >>> opengov_api.remove_record_additional_location("12345", "loc-123")
     """
-    with _get_client() as client:
-        url = build_url(
-            get_base_url(),
-            get_community(),
-            f"records/{record_id}/additional-locations/{location_id}",
-        )
-        response = client.delete(url)
-        response.raise_for_status()
+    delete_resource(
+        build_nested_url("records", record_id, "additional-locations", location_id)
+    )
 
 
 # Record Attachments endpoints
@@ -1497,20 +1250,11 @@ def list_record_attachments(
         sort=sort,
     )
 
-    with _get_client() as client:
-        url = build_url(
-            get_base_url(), get_community(), f"records/{record_id}/attachments"
-        )
-        response = client.get(url, params=params_model.to_query_params())
-        response.raise_for_status()
-        data = parse_json_response(response)
-
-        return JSONAPIResponse[AttachmentResource](
-            data=[AttachmentResource(**item) for item in data["data"]],
-            included=data.get("included"),
-            links=Links(**data["links"]) if data.get("links") else None,
-            meta=Meta(**data["meta"]) if data.get("meta") else None,
-        )
+    return list_resources(
+        build_nested_url("records", record_id, "attachments"),
+        AttachmentResource,
+        params_model.to_query_params(),
+    )
 
 
 @handle_request_errors
@@ -1543,20 +1287,11 @@ def add_record_attachment(
         >>> response = opengov_api.add_record_attachment("12345", attachment_data)
         >>> print(response.data.attributes.filename)
     """
-    with _get_client() as client:
-        url = build_url(
-            get_base_url(), get_community(), f"records/{record_id}/attachments"
-        )
-        response = client.post(url, json=data)
-        response.raise_for_status()
-        data = parse_json_response(response)
-
-        return JSONAPIResponse[AttachmentResource](
-            data=AttachmentResource(**data["data"]),
-            included=data.get("included"),
-            links=Links(**data["links"]) if data.get("links") else None,
-            meta=Meta(**data["meta"]) if data.get("meta") else None,
-        )
+    return create_resource(
+        build_nested_url("records", record_id, "attachments"),
+        AttachmentResource,
+        data,
+    )
 
 
 @handle_request_errors
@@ -1588,22 +1323,10 @@ def get_record_attachment(
         >>> response = opengov_api.get_record_attachment("12345", "att-123")
         >>> print(response.data.attributes.filename)
     """
-    with _get_client() as client:
-        url = build_url(
-            get_base_url(),
-            get_community(),
-            f"records/{record_id}/attachments/{attachment_id}",
-        )
-        response = client.get(url)
-        response.raise_for_status()
-        data = parse_json_response(response)
-
-        return JSONAPIResponse[AttachmentResource](
-            data=AttachmentResource(**data["data"]),
-            included=data.get("included"),
-            links=Links(**data["links"]) if data.get("links") else None,
-            meta=Meta(**data["meta"]) if data.get("meta") else None,
-        )
+    return get_resource(
+        build_nested_url("records", record_id, "attachments", attachment_id),
+        AttachmentResource,
+    )
 
 
 @handle_request_errors
@@ -1628,14 +1351,9 @@ def remove_record_attachment(record_id: str, attachment_id: str) -> None:
         >>> opengov_api.set_community("your-community")
         >>> opengov_api.remove_record_attachment("12345", "att-123")
     """
-    with _get_client() as client:
-        url = build_url(
-            get_base_url(),
-            get_community(),
-            f"records/{record_id}/attachments/{attachment_id}",
-        )
-        response = client.delete(url)
-        response.raise_for_status()
+    delete_resource(
+        build_nested_url("records", record_id, "attachments", attachment_id)
+    )
 
 
 # Record Change Requests endpoints
@@ -1668,22 +1386,10 @@ def get_record_change_request(
         >>> change_request = opengov_api.get_record_change_request("12345", "cr-123")
         >>> print(change_request.data.id)
     """
-    with _get_client() as client:
-        url = build_url(
-            get_base_url(),
-            get_community(),
-            f"records/{record_id}/change-requests/{change_request_id}",
-        )
-        response = client.get(url)
-        response.raise_for_status()
-        data = parse_json_response(response)
-
-        return JSONAPIResponse[ChangeRequestResource](
-            data=ChangeRequestResource(**data["data"]),
-            included=data.get("included"),
-            links=Links(**data["links"]) if data.get("links") else None,
-            meta=Meta(**data["meta"]) if data.get("meta") else None,
-        )
+    return get_resource(
+        build_nested_url("records", record_id, "change-requests", change_request_id),
+        ChangeRequestResource,
+    )
 
 
 @handle_request_errors
@@ -1714,20 +1420,10 @@ def get_most_recent_record_change_request(
         >>> change_request = opengov_api.get_most_recent_record_change_request("12345")
         >>> print(change_request.data.id)
     """
-    with _get_client() as client:
-        url = build_url(
-            get_base_url(), get_community(), f"records/{record_id}/change-requests"
-        )
-        response = client.get(url)
-        response.raise_for_status()
-        data = parse_json_response(response)
-
-        return JSONAPIResponse[ChangeRequestResource](
-            data=ChangeRequestResource(**data["data"]),
-            included=data.get("included"),
-            links=Links(**data["links"]) if data.get("links") else None,
-            meta=Meta(**data["meta"]) if data.get("meta") else None,
-        )
+    return get_resource(
+        build_nested_url("records", record_id, "change-requests"),
+        ChangeRequestResource,
+    )
 
 
 @handle_request_errors
@@ -1760,20 +1456,11 @@ def create_record_change_request(
         >>> change_request = opengov_api.create_record_change_request("12345", change_request_data)
         >>> print(change_request.data.id)
     """
-    with _get_client() as client:
-        url = build_url(
-            get_base_url(), get_community(), f"records/{record_id}/change-requests"
-        )
-        response = client.post(url, json=data)
-        response.raise_for_status()
-        data = parse_json_response(response)
-
-        return JSONAPIResponse[ChangeRequestResource](
-            data=ChangeRequestResource(**data["data"]),
-            included=data.get("included"),
-            links=Links(**data["links"]) if data.get("links") else None,
-            meta=Meta(**data["meta"]) if data.get("meta") else None,
-        )
+    return create_resource(
+        build_nested_url("records", record_id, "change-requests"),
+        ChangeRequestResource,
+        data,
+    )
 
 
 @handle_request_errors
@@ -1798,14 +1485,9 @@ def cancel_record_change_request(record_id: str, change_request_id: str) -> None
         >>> opengov_api.set_community("your-community")
         >>> opengov_api.cancel_record_change_request("12345", "cr-123")
     """
-    with _get_client() as client:
-        url = build_url(
-            get_base_url(),
-            get_community(),
-            f"records/{record_id}/change-requests/{change_request_id}",
-        )
-        response = client.delete(url)
-        response.raise_for_status()
+    delete_resource(
+        build_nested_url("records", record_id, "change-requests", change_request_id)
+    )
 
 
 # Record Workflow Steps endpoints
@@ -1857,20 +1539,11 @@ def list_record_workflow_steps(
         sort=sort,
     )
 
-    with _get_client() as client:
-        url = build_url(
-            get_base_url(), get_community(), f"records/{record_id}/workflow-steps"
-        )
-        response = client.get(url, params=params_model.to_query_params())
-        response.raise_for_status()
-        data = parse_json_response(response)
-
-        return JSONAPIResponse[WorkflowStepResource](
-            data=[WorkflowStepResource(**item) for item in data["data"]],
-            included=data.get("included"),
-            links=Links(**data["links"]) if data.get("links") else None,
-            meta=Meta(**data["meta"]) if data.get("meta") else None,
-        )
+    return list_resources(
+        build_nested_url("records", record_id, "workflow-steps"),
+        WorkflowStepResource,
+        params_model.to_query_params(),
+    )
 
 
 @handle_request_errors
@@ -1903,20 +1576,11 @@ def create_record_workflow_step(
         >>> response = opengov_api.create_record_workflow_step("12345", step_data)
         >>> print(response.data.attributes.name)
     """
-    with _get_client() as client:
-        url = build_url(
-            get_base_url(), get_community(), f"records/{record_id}/workflow-steps"
-        )
-        response = client.post(url, json=data)
-        response.raise_for_status()
-        data = parse_json_response(response)
-
-        return JSONAPIResponse[WorkflowStepResource](
-            data=WorkflowStepResource(**data["data"]),
-            included=data.get("included"),
-            links=Links(**data["links"]) if data.get("links") else None,
-            meta=Meta(**data["meta"]) if data.get("meta") else None,
-        )
+    return create_resource(
+        build_nested_url("records", record_id, "workflow-steps"),
+        WorkflowStepResource,
+        data,
+    )
 
 
 @handle_request_errors
@@ -1948,22 +1612,10 @@ def get_record_workflow_step(
         >>> response = opengov_api.get_record_workflow_step("12345", "step-123")
         >>> print(response.data.attributes.name)
     """
-    with _get_client() as client:
-        url = build_url(
-            get_base_url(),
-            get_community(),
-            f"records/{record_id}/workflow-steps/{step_id}",
-        )
-        response = client.get(url)
-        response.raise_for_status()
-        data = parse_json_response(response)
-
-        return JSONAPIResponse[WorkflowStepResource](
-            data=WorkflowStepResource(**data["data"]),
-            included=data.get("included"),
-            links=Links(**data["links"]) if data.get("links") else None,
-            meta=Meta(**data["meta"]) if data.get("meta") else None,
-        )
+    return get_resource(
+        build_nested_url("records", record_id, "workflow-steps", step_id),
+        WorkflowStepResource,
+    )
 
 
 @handle_request_errors
@@ -1997,22 +1649,11 @@ def update_record_workflow_step(
         >>> response = opengov_api.update_record_workflow_step("12345", "step-123", step_data)
         >>> print(response.data.attributes.name)
     """
-    with _get_client() as client:
-        url = build_url(
-            get_base_url(),
-            get_community(),
-            f"records/{record_id}/workflow-steps/{step_id}",
-        )
-        response = client.patch(url, json=data)
-        response.raise_for_status()
-        data = parse_json_response(response)
-
-        return JSONAPIResponse[WorkflowStepResource](
-            data=WorkflowStepResource(**data["data"]),
-            included=data.get("included"),
-            links=Links(**data["links"]) if data.get("links") else None,
-            meta=Meta(**data["meta"]) if data.get("meta") else None,
-        )
+    return update_resource(
+        build_nested_url("records", record_id, "workflow-steps", step_id),
+        WorkflowStepResource,
+        data,
+    )
 
 
 @handle_request_errors
@@ -2037,14 +1678,7 @@ def delete_record_workflow_step(record_id: str, step_id: str) -> None:
         >>> opengov_api.set_community("your-community")
         >>> opengov_api.delete_record_workflow_step("12345", "step-123")
     """
-    with _get_client() as client:
-        url = build_url(
-            get_base_url(),
-            get_community(),
-            f"records/{record_id}/workflow-steps/{step_id}",
-        )
-        response = client.delete(url)
-        response.raise_for_status()
+    delete_resource(build_nested_url("records", record_id, "workflow-steps", step_id))
 
 
 # Record Workflow Step Comments endpoints
@@ -2098,22 +1732,11 @@ def list_record_workflow_step_comments(
         sort=sort,
     )
 
-    with _get_client() as client:
-        url = build_url(
-            get_base_url(),
-            get_community(),
-            f"records/{record_id}/workflow-steps/{step_id}/comments",
-        )
-        response = client.get(url, params=params_model.to_query_params())
-        response.raise_for_status()
-        data = parse_json_response(response)
-
-        return JSONAPIResponse[WorkflowStepCommentResource](
-            data=[WorkflowStepCommentResource(**item) for item in data["data"]],
-            included=data.get("included"),
-            links=Links(**data["links"]) if data.get("links") else None,
-            meta=Meta(**data["meta"]) if data.get("meta") else None,
-        )
+    return list_resources(
+        build_nested_url("records", record_id, "workflow-steps", step_id, "comments"),
+        WorkflowStepCommentResource,
+        params_model.to_query_params(),
+    )
 
 
 @handle_request_errors
@@ -2147,22 +1770,11 @@ def create_record_workflow_step_comment(
         >>> response = opengov_api.create_record_workflow_step_comment("12345", "step-123", comment_data)
         >>> print(response.data.attributes.text)
     """
-    with _get_client() as client:
-        url = build_url(
-            get_base_url(),
-            get_community(),
-            f"records/{record_id}/workflow-steps/{step_id}/comments",
-        )
-        response = client.post(url, json=data)
-        response.raise_for_status()
-        data = parse_json_response(response)
-
-        return JSONAPIResponse[WorkflowStepCommentResource](
-            data=WorkflowStepCommentResource(**data["data"]),
-            included=data.get("included"),
-            links=Links(**data["links"]) if data.get("links") else None,
-            meta=Meta(**data["meta"]) if data.get("meta") else None,
-        )
+    return create_resource(
+        build_nested_url("records", record_id, "workflow-steps", step_id, "comments"),
+        WorkflowStepCommentResource,
+        data,
+    )
 
 
 @handle_request_errors
@@ -2195,22 +1807,12 @@ def get_record_workflow_step_comment(
         >>> response = opengov_api.get_record_workflow_step_comment("12345", "step-123", "comment-123")
         >>> print(response.data.attributes.text)
     """
-    with _get_client() as client:
-        url = build_url(
-            get_base_url(),
-            get_community(),
-            f"records/{record_id}/workflow-steps/{step_id}/comments/{comment_id}",
-        )
-        response = client.get(url)
-        response.raise_for_status()
-        data = parse_json_response(response)
-
-        return JSONAPIResponse[WorkflowStepCommentResource](
-            data=WorkflowStepCommentResource(**data["data"]),
-            included=data.get("included"),
-            links=Links(**data["links"]) if data.get("links") else None,
-            meta=Meta(**data["meta"]) if data.get("meta") else None,
-        )
+    return get_resource(
+        build_nested_url(
+            "records", record_id, "workflow-steps", step_id, "comments", comment_id
+        ),
+        WorkflowStepCommentResource,
+    )
 
 
 @handle_request_errors
@@ -2238,14 +1840,11 @@ def delete_record_workflow_step_comment(
         >>> opengov_api.set_community("your-community")
         >>> opengov_api.delete_record_workflow_step_comment("12345", "step-123", "comment-123")
     """
-    with _get_client() as client:
-        url = build_url(
-            get_base_url(),
-            get_community(),
-            f"records/{record_id}/workflow-steps/{step_id}/comments/{comment_id}",
+    delete_resource(
+        build_nested_url(
+            "records", record_id, "workflow-steps", step_id, "comments", comment_id
         )
-        response = client.delete(url)
-        response.raise_for_status()
+    )
 
 
 # Record Collections endpoints
@@ -2297,20 +1896,11 @@ def list_record_collections(
         sort=sort,
     )
 
-    with _get_client() as client:
-        url = build_url(
-            get_base_url(), get_community(), f"records/{record_id}/collections"
-        )
-        response = client.get(url, params=params_model.to_query_params())
-        response.raise_for_status()
-        data = parse_json_response(response)
-
-        return JSONAPIResponse[CollectionResource](
-            data=[CollectionResource(**item) for item in data["data"]],
-            included=data.get("included"),
-            links=Links(**data["links"]) if data.get("links") else None,
-            meta=Meta(**data["meta"]) if data.get("meta") else None,
-        )
+    return list_resources(
+        build_nested_url("records", record_id, "collections"),
+        CollectionResource,
+        params_model.to_query_params(),
+    )
 
 
 @handle_request_errors
@@ -2342,22 +1932,10 @@ def get_record_collection(
         >>> response = opengov_api.get_record_collection("12345", "coll-123")
         >>> print(response.data.attributes.name)
     """
-    with _get_client() as client:
-        url = build_url(
-            get_base_url(),
-            get_community(),
-            f"records/{record_id}/collections/{collection_id}",
-        )
-        response = client.get(url)
-        response.raise_for_status()
-        data = parse_json_response(response)
-
-        return JSONAPIResponse[CollectionResource](
-            data=CollectionResource(**data["data"]),
-            included=data.get("included"),
-            links=Links(**data["links"]) if data.get("links") else None,
-            meta=Meta(**data["meta"]) if data.get("meta") else None,
-        )
+    return get_resource(
+        build_nested_url("records", record_id, "collections", collection_id),
+        CollectionResource,
+    )
 
 
 @handle_request_errors
@@ -2391,22 +1969,11 @@ def create_record_collection_entry(
         >>> entry = opengov_api.create_record_collection_entry("12345", "coll-123", entry_data)
         >>> print(entry.data.id)
     """
-    with _get_client() as client:
-        url = build_url(
-            get_base_url(),
-            get_community(),
-            f"records/{record_id}/collections/{collection_id}",
-        )
-        response = client.post(url, json=data)
-        response.raise_for_status()
-        data = parse_json_response(response)
-
-        return JSONAPIResponse[CollectionEntryResource](
-            data=CollectionEntryResource(**data["data"]),
-            included=data.get("included"),
-            links=Links(**data["links"]) if data.get("links") else None,
-            meta=Meta(**data["meta"]) if data.get("meta") else None,
-        )
+    return create_resource(
+        build_nested_url("records", record_id, "collections", collection_id),
+        CollectionEntryResource,
+        data,
+    )
 
 
 @handle_request_errors
@@ -2439,22 +2006,12 @@ def get_record_collection_entry(
         >>> entry = opengov_api.get_record_collection_entry("12345", "coll-123", "entry-123")
         >>> print(entry.data.id)
     """
-    with _get_client() as client:
-        url = build_url(
-            get_base_url(),
-            get_community(),
-            f"records/{record_id}/collections/{collection_id}/entries/{entry_id}",
-        )
-        response = client.get(url)
-        response.raise_for_status()
-        data = parse_json_response(response)
-
-        return JSONAPIResponse[CollectionEntryResource](
-            data=CollectionEntryResource(**data["data"]),
-            included=data.get("included"),
-            links=Links(**data["links"]) if data.get("links") else None,
-            meta=Meta(**data["meta"]) if data.get("meta") else None,
-        )
+    return get_resource(
+        build_nested_url(
+            "records", record_id, "collections", collection_id, "entries", entry_id
+        ),
+        CollectionEntryResource,
+    )
 
 
 @handle_request_errors
@@ -2489,19 +2046,10 @@ def update_record_collection_entry(
         >>> entry = opengov_api.update_record_collection_entry("12345", "coll-123", "entry-123", entry_data)
         >>> print(entry.data.id)
     """
-    with _get_client() as client:
-        url = build_url(
-            get_base_url(),
-            get_community(),
-            f"records/{record_id}/collections/{collection_id}/entries/{entry_id}",
-        )
-        response = client.patch(url, json=data)
-        response.raise_for_status()
-        data = parse_json_response(response)
-
-        return JSONAPIResponse[CollectionEntryResource](
-            data=CollectionEntryResource(**data["data"]),
-            included=data.get("included"),
-            links=Links(**data["links"]) if data.get("links") else None,
-            meta=Meta(**data["meta"]) if data.get("meta") else None,
-        )
+    return update_resource(
+        build_nested_url(
+            "records", record_id, "collections", collection_id, "entries", entry_id
+        ),
+        CollectionEntryResource,
+        data,
+    )

@@ -21,11 +21,11 @@ response = opengov_api.list_records(
 
 print(f"Page {response.current_page()} of {response.total_pages()}")
 print(f"Total records: {response.total_records()}")
+
 if isinstance(response.data, list):
     print(f"Records on this page: {len(response.data)}")
-
     for record in response.data:
-        print(f"  - {record.attributes.number} ({record.attributes.number})")
+        print(f"  - {record.attributes.number} ({record.id})")
 
 # Example 2: Date range filtering
 print("\nExample 2: Records created after March 1, 2025")
@@ -47,6 +47,11 @@ response = opengov_api.list_records(
 )
 
 print(f"Found {response.total_records()} records in Q1 2025")
+if isinstance(response.data, list):
+    for record in response.data:
+        print(
+            f"  - {record.attributes.number} created on {record.attributes.created_at}"
+        )
 
 # Example 4: Pagination - fetch next page
 print("\nExample 4: Manual pagination")
@@ -107,7 +112,7 @@ response = opengov_api.list_records(
 if isinstance(response.data, list):
     for record in response.data:
         # Only name, number, and status will be in attributes
-        print(f"  - {record.attributes.number}: {record.attributes.number}")
+        print(f"  - {record.id}: {record.attributes.number}")
 
 # Included resources are available in response.included
 if response.included:
