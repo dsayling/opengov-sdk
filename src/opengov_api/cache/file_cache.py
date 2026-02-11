@@ -126,7 +126,7 @@ class FileCache(CacheInterface):
                     data=data,
                     cached_at=datetime.now().isoformat(),
                     ttl_seconds=ttl_sec,
-                    size_bytes=0,  # Computed post-write; not persisted
+                    size_bytes=0,  # Persisted as 0; actual size computed from file when needed
                 )
 
                 # Write to cache
@@ -186,10 +186,6 @@ class FileCache(CacheInterface):
     def _cleanup_old_entries(self) -> None:
         """Remove oldest cache entries until under size limit (must be called with lock)."""
         cache_files = list(self.cache_dir.glob("*.json"))
-
-        if not cache_files:
-            _log.info("No cache entries to remove during cleanup")
-            return
 
         # Precompute file sizes and modification times to avoid repeated stat() calls
         file_info: list[tuple[Path, int, float]] = []
