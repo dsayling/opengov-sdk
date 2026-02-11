@@ -25,7 +25,7 @@ print(f"Total records: {response.total_records()}")
 if isinstance(response.data, list):
     print(f"Records on this page: {len(response.data)}")
     for record in response.data:
-        print(f"  - {record.attributes.number} ({record.attributes.number})")
+        print(f"  - {record.attributes.number} ({record.id})")
 
 # Example 2: Date range filtering
 print("\nExample 2: Records created after March 1, 2025")
