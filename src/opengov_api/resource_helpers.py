@@ -41,7 +41,7 @@ def _generate_cache_key(method: str, url: str, params: dict[str, Any] | None) ->
 
     # Include community and API key hash for isolation
     community = get_community()
-    api_key_hash = hashlib.sha256(get_api_key().encode()).hexdigest()[:8]
+    api_key_hash = hashlib.sha256(get_api_key().encode()).hexdigest()
 
     # Create composite key
     key_parts = f"{method}:{url}:{params_str}:{community}:{api_key_hash}"
@@ -92,7 +92,7 @@ def _make_cached_request(
             status_code=cached_data["status_code"],
             headers=cached_data["headers"],
             content=content,
-            request=httpx.Request(method, url),
+            request=httpx.Request(method, url, params=params),
         )
 
     # Make actual request
@@ -103,16 +103,20 @@ def _make_cached_request(
         # Extract TTL from response headers
         ttl_seconds = HTTPCacheHelper.get_cache_ttl(response)
 
-        # Cache response data, encoding bytes as base64 for JSON storage
-        cache.set(
-            cache_key,
-            {
-                "status_code": response.status_code,
-                "headers": dict(response.headers),
-                "content": base64.b64encode(response.content).decode("ascii"),
-            },
-            ttl_seconds=ttl_seconds,
-        )
+        # Don't cache responses that are immediately stale (max-age=0 or expired Expires
+        # header). FileCache treats ttl_seconds=0 as "never expires", so we must skip
+        # writing rather than storing a response that should not be served from cache.
+        if ttl_seconds != 0:
+            # Cache response data, encoding bytes as base64 for JSON storage
+            cache.set(
+                cache_key,
+                {
+                    "status_code": response.status_code,
+                    "headers": dict(response.headers),
+                    "content": base64.b64encode(response.content).decode("ascii"),
+                },
+                ttl_seconds=ttl_seconds,
+            )
 
     return response
 

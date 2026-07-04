@@ -29,9 +29,9 @@ class HTTPCacheHelper:
             directive = directive.strip()  # noqa: PLW2901
             if "=" in directive:
                 key, value = directive.split("=", 1)
-                directives[key.strip()] = value.strip().strip('"')
+                directives[key.strip().lower()] = value.strip().strip('"')
             else:
-                directives[directive] = None
+                directives[directive.lower()] = None
 
         return directives
 

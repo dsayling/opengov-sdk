@@ -94,6 +94,11 @@ class FileCache(CacheInterface):
                     return None
 
                 _log.debug(f"Cache hit: {key} (age: {entry.age_hours():.1f}h)")
+                # Touch the file to update mtime so eviction reflects last access (approximates LRU)
+                try:
+                    cache_file.touch()
+                except Exception as e:
+                    _log.debug(f"Failed to touch cache file {cache_file}: {e}")
                 return entry.data
 
             except Exception as e:

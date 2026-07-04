@@ -45,7 +45,11 @@ class TestCacheEntry:
         assert not entry.is_expired()
 
     def test_is_expired_zero_ttl(self):
-        """Test entry with zero TTL never expires."""
+        """Test CacheEntry.is_expired() treats ttl_seconds=0 as never-expires sentinel.
+
+        Note: _make_cached_request() skips writing to the cache when ttl_seconds=0
+        (indicating an immediately-stale HTTP response, e.g. Cache-Control: max-age=0).
+        """
         entry = CacheEntry(
             key="test-key",
             data={"foo": "bar"},
