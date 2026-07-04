@@ -5,14 +5,120 @@ Provides reusable CRUD operations and pagination helpers that can be used
 across all resource modules (records, users, locations, projects, etc.).
 """
 
+import base64
+import hashlib
+import json
 from typing import Any, Callable, Generator, TypeVar, cast
 
+import httpx
+
 from .base import build_url, parse_json_response
-from .client import _get_client, get_base_url, get_community
+from .cache import HTTPCacheHelper
+from .client import _get_client, get_api_key, get_base_url, get_cache, get_community
 from .models import JSONAPIResponse, Links, Meta
 
 # Generic type variable for resource types
 T = TypeVar("T")
+
+
+def _generate_cache_key(method: str, url: str, params: dict[str, Any] | None) -> str:
+    """
+    Generate a cache key from request parameters.
+
+    Includes method, URL, params, community, and API key hash to ensure
+    cache isolation between different requests and accounts.
+
+    Args:
+        method: HTTP method (GET, POST, etc.)
+        url: Request URL
+        params: Query parameters
+
+    Returns:
+        SHA256 hash of the request signature
+    """
+    # Sort params for consistent keys
+    params_str = json.dumps(params or {}, sort_keys=True)
+
+    # Include community and API key hash for isolation
+    community = get_community()
+    api_key_hash = hashlib.sha256(get_api_key().encode()).hexdigest()
+
+    # Create composite key
+    key_parts = f"{method}:{url}:{params_str}:{community}:{api_key_hash}"
+
+    # Hash for safe, fixed-length key
+    return hashlib.sha256(key_parts.encode()).hexdigest()
+
+
+def _make_cached_request(
+    client: httpx.Client,
+    method: str,
+    url: str,
+    **kwargs: Any,
+) -> httpx.Response:
+    """
+    Make an HTTP request with optional caching.
+
+    Only GET requests are cached. Cache respects HTTP Cache-Control headers.
+
+    Args:
+        client: httpx.Client instance
+        method: HTTP method
+        url: Request URL
+        **kwargs: Additional arguments for httpx request (params, json, etc.)
+
+    Returns:
+        httpx.Response object
+    """
+    cache = get_cache()
+
+    # Skip cache for non-GET requests or if caching is disabled
+    if cache is None or method.upper() != "GET":
+        return client.request(method, url, **kwargs)
+
+    # Generate cache key
+    params = kwargs.get("params")
+    cache_key = _generate_cache_key(method, url, params)
+
+    # Check cache
+    cached_data = cache.get(cache_key)
+    if cached_data is not None:
+        # Reconstruct response from cached data
+        # Decode base64-encoded content back to bytes
+        content = cached_data["content"]
+        if isinstance(content, str):
+            content = base64.b64decode(content)
+        return httpx.Response(
+            status_code=cached_data["status_code"],
+            headers=cached_data["headers"],
+            content=content,
+            request=httpx.Request(method, url, params=params),
+        )
+
+    # Make actual request
+    response = client.request(method, url, **kwargs)
+
+    # Cache successful responses if cacheable
+    if HTTPCacheHelper.is_cacheable(response):
+        # Extract TTL from response headers
+        ttl_seconds = HTTPCacheHelper.get_cache_ttl(response)
+
+        # Don't cache responses that are immediately stale (max-age=0 or expired Expires
+        # header). FileCache treats ttl_seconds=0 as "never expires", so we must skip
+        # writing rather than storing a response that should not be served from cache.
+        if ttl_seconds != 0:
+            # Cache response data, encoding bytes as base64 for JSON storage
+            cache.set(
+                cache_key,
+                {
+                    "status_code": response.status_code,
+                    "headers": dict(response.headers),
+                    "content": base64.b64encode(response.content).decode("ascii"),
+                },
+                ttl_seconds=ttl_seconds,
+            )
+
+    return response
 
 
 def get_resource(
@@ -36,7 +142,7 @@ def get_resource(
     """
     with _get_client() as client:
         url = build_url(get_base_url(), get_community(), endpoint)
-        response = client.get(url)
+        response = _make_cached_request(client, "GET", url)
         response.raise_for_status()
         data = parse_json_response(response)
 
@@ -163,7 +269,7 @@ def list_resources(
     """
     with _get_client() as client:
         url = build_url(get_base_url(), get_community(), endpoint)
-        response = client.get(url, params=params or {})
+        response = _make_cached_request(client, "GET", url, params=params or {})
         response.raise_for_status()
         data = parse_json_response(response)
 
