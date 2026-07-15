@@ -8,8 +8,8 @@ import opengov_api
 from opengov_api.models import RecordStatus
 
 # Configure API connection
-opengov_api.set_api_key("your-api-key-here")
-opengov_api.set_community("your-community")
+# opengov_api.set_api_key("your-api-key-here")
+# opengov_api.set_community("your-community")
 
 
 def basic_caching_example():
@@ -264,10 +264,10 @@ if __name__ == "__main__":
     try:
         # Run examples
         basic_caching_example()
-        custom_configuration_example()
-        cache_management_example()
-        monitoring_cache_example()
-        conditional_caching_example()
+        # custom_configuration_example()
+        # cache_management_example()
+        # monitoring_cache_example()
+        # conditional_caching_example()
 
         # Optional examples (may fail if data not available)
         try:

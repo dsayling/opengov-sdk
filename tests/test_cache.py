@@ -403,7 +403,7 @@ class TestCacheKeyGeneration:
 
     def test_cache_key_includes_community(self):
         """Test cache key includes community for isolation."""
-        from opengov_api.resource_helpers import _generate_cache_key
+        from opengov_api.client import _generate_cache_key
         from opengov_api import set_community, set_api_key
 
         set_api_key("test-key")
@@ -418,7 +418,7 @@ class TestCacheKeyGeneration:
 
     def test_cache_key_includes_api_key(self):
         """Test cache key includes API key hash for isolation."""
-        from opengov_api.resource_helpers import _generate_cache_key
+        from opengov_api.client import _generate_cache_key
         from opengov_api import set_community, set_api_key
 
         set_community("test-community")
@@ -433,7 +433,7 @@ class TestCacheKeyGeneration:
 
     def test_cache_key_consistent_params(self):
         """Test cache key is consistent with same params."""
-        from opengov_api.resource_helpers import _generate_cache_key
+        from opengov_api.client import _generate_cache_key
         from opengov_api import set_community, set_api_key
 
         set_api_key("test-key")

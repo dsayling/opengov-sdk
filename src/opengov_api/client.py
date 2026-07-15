@@ -4,6 +4,9 @@ Client factory and configuration for OpenGov API SDK.
 Provides module-level configuration management and client factory.
 """
 
+import base64
+import hashlib
+import json
 import os
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, Literal, Optional
@@ -357,6 +360,71 @@ def clear_cache() -> None:
         _cache.clear()
 
 
+def _generate_cache_key(method: str, url: str, params: dict[str, Any] | None) -> str:
+    """Generate a cache key from request parameters, scoped per account and community."""
+    params_str = json.dumps(params or {}, sort_keys=True)
+    community = get_community()
+    api_key_hash = hashlib.sha256(get_api_key().encode()).hexdigest()
+    key_parts = f"{method}:{url}:{params_str}:{community}:{api_key_hash}"
+    return hashlib.sha256(key_parts.encode()).hexdigest()
+
+
+class _CachingClient(httpx.Client):
+    """
+    httpx.Client subclass that transparently applies cache reads/writes for GET requests.
+
+    All endpoint modules use ``client.get()`` (or ``client.request("GET", ...)``)
+    which funnels through this override, so caching is applied uniformly without
+    requiring changes to individual endpoint functions.
+    """
+
+    def request(self, method: str, url: Any, **kwargs: Any) -> httpx.Response:  # type: ignore[override]
+        from .cache import HTTPCacheHelper
+
+        cache = get_cache()
+
+        if cache is None or method.upper() != "GET":
+            return super().request(method, url, **kwargs)
+
+        url_str = str(url)
+        params = kwargs.get("params")
+        cache_key = _generate_cache_key(method, url_str, params)
+
+        cached = cache.get(cache_key)
+        if cached is not None:
+            content = cached["content"]
+            if isinstance(content, str):
+                content = base64.b64decode(content)
+            return httpx.Response(
+                status_code=cached["status_code"],
+                headers=cached["headers"],
+                content=content,
+                request=httpx.Request(method, url_str, params=params),
+            )
+
+        response = super().request(method, url, **kwargs)
+
+        if HTTPCacheHelper.is_cacheable(response):
+            ttl_seconds = HTTPCacheHelper.get_cache_ttl(response)
+            if ttl_seconds != 0:
+                headers = {
+                    k: v
+                    for k, v in response.headers.items()
+                    if k.lower() not in ("content-encoding", "transfer-encoding")
+                }
+                cache.set(
+                    cache_key,
+                    {
+                        "status_code": response.status_code,
+                        "headers": headers,
+                        "content": base64.b64encode(response.content).decode("ascii"),
+                    },
+                    ttl_seconds=ttl_seconds,
+                )
+
+        return response
+
+
 def _get_client() -> httpx.Client:
     """
     Create configured httpx.Client with authentication and defaults.
@@ -375,7 +443,8 @@ def _get_client() -> httpx.Client:
     else:
         auth_header = f"Token {api_key}"
 
-    return httpx.Client(
+    client_cls = _CachingClient if get_cache() is not None else httpx.Client
+    return client_cls(
         headers={
             "Authorization": auth_header,
             "Content-Type": "application/json",
